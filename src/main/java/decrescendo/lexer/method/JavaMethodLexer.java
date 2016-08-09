@@ -29,13 +29,12 @@ public class JavaMethodLexer implements MethodLexer {
 
 	@Override
 	public HashSet<Method> getMethodSet(HashSet<File> files) throws IOException {
-		HashSet<Method> methodSet = files.stream()
+		return files.stream()
 				.parallel()
 				.map(e -> getMethodInfo(e.getPath(), e.getSource(), e.isRepresentative()))
 				.filter(e -> e != null)
 				.flatMap(e -> e.stream())
 				.collect(Collectors.toCollection(HashSet::new));
-		return methodSet;
 	}
 
 	@Override

@@ -11,16 +11,16 @@ public abstract class Granularity {
 	private List<String> normalizedTokens;
 	private List<String> originalTokens;
 	private List<Integer> lineNumberPerToken;
-	private int startline;
-	private int endline;
+	private int startLine;
+	private int endLine;
 	private int representative;
 	private List<byte[]> normalizedSentences;
 	private List<byte[]> originalSentences;
 	private List<List<Integer>> lineNumberPerSentence;
 
-	public Granularity(String path, String name, String originalHash, String normalizedHash,
-			List<String> originalTokens, List<String> normalizedTokens, List<Integer> lineNumberPerToken,
-			int startline, int endline, int num, int representative) {
+	Granularity(String path, String name, String originalHash, String normalizedHash,
+				List<String> originalTokens, List<String> normalizedTokens, List<Integer> lineNumberPerToken,
+				int startLine, int endLine, int num, int representative) {
 		this.path = path;
 		this.name = name;
 		this.originalHash = originalHash;
@@ -28,8 +28,8 @@ public abstract class Granularity {
 		this.originalTokens = originalTokens;
 		this.normalizedTokens = normalizedTokens;
 		this.lineNumberPerToken = lineNumberPerToken;
-		this.startline = startline;
-		this.endline = endline;
+		this.startLine = startLine;
+		this.endLine = endLine;
 		this.num = num;
 		this.representative = representative;
 	}
@@ -82,12 +82,12 @@ public abstract class Granularity {
 		return lineNumberPerToken;
 	}
 
-	public int getStartline() {
-		return startline;
+	public int getStartLine() {
+		return startLine;
 	}
 
-	public int getEndline() {
-		return endline;
+	public int getEndLine() {
+		return endLine;
 	}
 
 	public int isRepresentative() {

@@ -3,7 +3,6 @@ package decrescendo.clonedetector;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -17,15 +16,17 @@ import decrescendo.codefragmentclone.CloneRange;
 import decrescendo.codefragmentclone.CodeFragmentClonePair;
 import decrescendo.config.Config;
 import decrescendo.db.DBManager;
-import decrescendo.db.DataAcsessObject;
+import decrescendo.db.DataAccessObject;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Granularity;
 import decrescendo.granularity.Method;
 import decrescendo.lexer.sentence.SentenceLexer;
 import decrescendo.smithwaterman.SmithWaterman;
 
+import static java.util.Collections.synchronizedList;
+
 public class CodeFragmentCloneDetector<T extends Granularity> {
-	public static int count;
+	private static int count;
 
 	public CodeFragmentCloneDetector() {
 		count = 0;
@@ -36,22 +37,21 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 
 		List<T> list = addSeparatedSentenceInfo(set);
 
-		List<CodeFragmentClonePair<T>> cfClonePairList = Collections.synchronizedList(new ArrayList<CodeFragmentClonePair<T>>());
+		List<CodeFragmentClonePair<T>> cfClonePairList;
+        cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePair<T>>());
 
-		ExecutorService service = Executors.newCachedThreadPool();
+        ExecutorService service = Executors.newCachedThreadPool();
 		// ExecutorService service = Executors.newSingleThreadExecutor();
 
 		for (int i = 0; i < list.size() - 1; i++) {
 			for (int j = i + 1; j < list.size(); j++) {
-				Future<List<CodeFragmentClonePair<T>>> future = service.submit(new SmithWaterman<T>(list.get(i), list.get(j)));
-				if (future != null) {
-					try {
-						List<CodeFragmentClonePair<T>> tmpcfCloneList = future.get();
-						tmpcfCloneList.stream().forEach(e -> cfClonePairList.add(e));
-					} catch (InterruptedException | ExecutionException e) {
-						e.printStackTrace();
-					}
-				}
+				Future<List<CodeFragmentClonePair<T>>> future = service.submit(new SmithWaterman<>(list.get(i), list.get(j)));
+				try {
+                    List<CodeFragmentClonePair<T>> tmpCfCloneList = future.get();
+                    tmpCfCloneList.forEach(cfClonePairList::add);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
 			}
 		}
 		service.shutdown();
@@ -70,10 +70,10 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		System.out.println("Finish to detect CodeFragment Code Clone");
 	}
 
-	public static <T extends Granularity> List<T> addSeparatedSentenceInfo(HashSet<T> set) {
+	static <T extends Granularity> List<T> addSeparatedSentenceInfo(HashSet<T> set) {
 		return set.stream()
 				.parallel()
-				.map(e -> SentenceLexer.separateSentences(e))
+				.map(SentenceLexer::separateSentences)
 				.collect(Collectors.toList());
 	}
 
@@ -92,11 +92,10 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		for (int i = 0; i < cfCloneSets.size(); i++) {
 			List<CodeFragmentClonePair<T>> cfClonePairList = cfCloneSets.get(i);
 
-			for (int j = 0; j < cfClonePairList.size(); j++) {
-				CodeFragmentClonePair<T> clonePair = cfClonePairList.get(j);
+			for (CodeFragmentClonePair<T> clonePair : cfClonePairList) {
 				outputCodeFragmentClonePair(clonePair, i);
 
-				if(Config.file || Config.method)
+				if (Config.file || Config.method)
 					searchCodeFragmentCloneInRepresentativeFileAndMethod(clonePair, i);
 			}
 		}
@@ -115,12 +114,12 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		CloneRange cloneRange2 = getCloneRange(cf2, cloneIndexes2, gapIndexes2);
 
 		int type;
-		if (cloneRange1.getGapLinesize() != 0 || cloneRange2.getGapLinesize() != 0)
+		if (cloneRange1.getGapLineSize() != 0 || cloneRange2.getGapLineSize() != 0)
 			type = 3;
 		else
 			type = getCloneType(cf1.getOriginalSentences(), cf2.getOriginalSentences(), cloneIndexes1, cloneIndexes2);
 
-		DataAcsessObject.insertCodeFragmentCloneInfo(cf1, cloneRange1, cf2, cloneRange2, type, count, i);
+		DataAccessObject.insertCodeFragmentCloneInfo(cf1, cloneRange1, cf2, cloneRange2, type, count, i);
 
 		if (count % 1000 == 0)
 			DBManager.cfcStatement.executeBatch();
@@ -130,57 +129,53 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 	private static <T extends Granularity> CloneRange getCloneRange(T cf, List<Integer> cloneIndexes, List<Integer> gapIndexes) {
 		int startIndex = cloneIndexes.get(cloneIndexes.size() - 1);
 		List<Integer> list = cf.getLineNumberPerSentence().get(startIndex);
-		int startline = list.get(0);
+		int startLine = list.get(0);
 
 		int endIndex = cloneIndexes.get(0);
 		list = cf.getLineNumberPerSentence().get(endIndex);
-		int endline = list.get(list.size() - 1);
+		int endLine = list.get(list.size() - 1);
 
-		List<Integer> gaplines = getGaplines(cf, gapIndexes);
-		StringBuffer gapsb = getStringofGapLines(gaplines);
-		return new CloneRange(startline, endline, gapsb.toString(), gaplines.size());
+		List<Integer> gapLines = getGapLines(cf, gapIndexes);
+		StringBuffer gapSb = getStringOfGapLines(gapLines);
+		return new CloneRange(startLine, endLine, gapSb.toString(), gapLines.size());
 	}
 
-	private static <T extends Granularity> List<Integer> getGaplines(T cf, List<Integer> gapIndexes) {
-		List<Integer> gaplines = new ArrayList<>();
-		for (int i = 0; i < gapIndexes.size(); i++) {
-			int gapIndex = gapIndexes.get(i);
-			int tmp = 0;
-			for (int p = cf.getLineNumberPerSentence().get(gapIndex).size() - 1; p >= 0; p--) {
-				int gapline = cf.getLineNumberPerSentence().get(gapIndex).get(p);
-				if (gapline != tmp)
-					gaplines.add(gapline);
-				tmp = gapline;
-			}
-		}
-		return gaplines;
+	private static <T extends Granularity> List<Integer> getGapLines(T cf, List<Integer> gapIndexes) {
+		List<Integer> gapLines = new ArrayList<>();
+        for (Integer gapIndex : gapIndexes) {
+            int tmp = 0;
+            for (int p = cf.getLineNumberPerSentence().get(gapIndex).size() - 1; p >= 0; p--) {
+                int gapLine = cf.getLineNumberPerSentence().get(gapIndex).get(p);
+                if (gapLine != tmp)
+                    gapLines.add(gapLine);
+                tmp = gapLine;
+            }
+        }
+		return gapLines;
 	}
 
-	private static <T extends Granularity> StringBuffer getStringofGapLines(List<Integer> gaplines) {
-		StringBuffer gapsb = new StringBuffer();
-		for (int i = gaplines.size() - 1; i >= 0; i--) {
-			gapsb.append(gaplines.get(i));
+	private static StringBuffer getStringOfGapLines(List<Integer> gapLines) {
+		StringBuffer gapSb = new StringBuffer();
+		for (int i = gapLines.size() - 1; i >= 0; i--) {
+			gapSb.append(gapLines.get(i));
 			if (i != 0)
-				gapsb.append(",");
+				gapSb.append(",");
 		}
-		return gapsb;
+		return gapSb;
 	}
 
-	private static <T extends Granularity> int getCloneType(List<byte[]> originalSentences1, List<byte[]> originalSentences2,
+	private static int getCloneType(List<byte[]> originalSentences1, List<byte[]> originalSentences2,
 			List<Integer> cloneIndexes1, List<Integer> cloneIndexes2) {
 		for (int i = 0; i < cloneIndexes1.size(); i++) {
-			if (java.util.Arrays.equals(originalSentences1.get(cloneIndexes1.get(i)),
-					originalSentences2.get(cloneIndexes2.get(i))))
-				continue;
-			else
-				return 2;
+			if (! java.util.Arrays.equals(originalSentences2.get(cloneIndexes2.get(i)),
+                    originalSentences1.get(cloneIndexes1.get(i)))) return 2;
 		}
 		return 1;
 	}
 
 	private void searchCodeFragmentCloneInRepresentativeFileAndMethod(CodeFragmentClonePair<T> cfClonePair, int i)
 			throws SQLException {
-		T cf1 = (T) cfClonePair.getClone1();
+		T cf1 = cfClonePair.getClone1();
 		List<Integer> cloneIndexes1 = cfClonePair.getCloneIndexes1();
 		List<Integer> gapIndexes1 = cfClonePair.getGapIndexes1();
 
@@ -188,16 +183,16 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		List<Integer> cloneIndexes2 = cfClonePair.getCloneIndexes2();
 		List<Integer> gapIndexes2 = cfClonePair.getGapIndexes2();
 
-		if (cf1.isRepresentative() == 1 || cf1.isRepresentative() == 3)
+		if (cf1.isRepresentative() == 1)
 			searchCodeFragmentCloneInRepresentativeFile(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 
-		if (cf1.isRepresentative() == 2 || cf1.isRepresentative() == 3)
+		if (cf1.isRepresentative() == 2)
 			searchCodeFragmentCloneInRepresentativeMethod(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 
-		if (cf2.isRepresentative() == 1 || cf2.isRepresentative() == 3)
+		if (cf2.isRepresentative() == 1)
 			searchCodeFragmentCloneInRepresentativeFile(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, i);
 
-		if (cf2.isRepresentative() == 2 || cf2.isRepresentative() == 3)
+		if (cf2.isRepresentative() == 2)
 			searchCodeFragmentCloneInRepresentativeMethod(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, i);
 	}
 
@@ -207,7 +202,7 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		try (ResultSet results = DBManager.searchfc1Statement.executeQuery()) {
 			while (results.next()) {
 				addCodeFragmentCloneInRepresentative(results.getString(1), cf1.getNum(),
-						cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
+                        cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 			}
 		}
 
@@ -215,7 +210,7 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		try (ResultSet results = DBManager.searchfc2Statement.executeQuery()) {
 			while (results.next()) {
 				addCodeFragmentCloneInRepresentative(results.getString(1), cf1.getNum(),
-						cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
+                        cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 			}
 		}
 	}
@@ -226,8 +221,8 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		DBManager.searchmc1Statement.setInt(2, cf1.getNum());
 		try (ResultSet results = DBManager.searchmc1Statement.executeQuery()) {
 			while (results.next()) {
-				addCodeFragmentCloneInRepresentative(results.getString(1), results.getInt(2), cf1,
-						cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
+				addCodeFragmentCloneInRepresentative(results.getString(1), results.getInt(2),
+                        cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 			}
 		}
 
@@ -235,15 +230,15 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		DBManager.searchmc2Statement.setInt(2, cf1.getNum());
 		try (ResultSet results = DBManager.searchmc2Statement.executeQuery()) {
 			while (results.next()) {
-				addCodeFragmentCloneInRepresentative(results.getString(1), results.getInt(2), cf1,
-						cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
+				addCodeFragmentCloneInRepresentative(results.getString(1), results.getInt(2),
+                        cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 			}
 		}
 	}
 
 	private void addCodeFragmentCloneInRepresentative(String path, int num,
-			T method1, List<Integer> cloneIndexes1, List<Integer> gapIndexes1,
-			T method2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2, int i) throws SQLException {
+                                                      List<Integer> cloneIndexes1, List<Integer> gapIndexes1,
+                                                      T method2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2, int i) throws SQLException {
 		String path2 = "";
 		String name2 = "";
 		int num2 = -1;
@@ -258,7 +253,7 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		DBManager.searchdsStatement.setInt(2, num);
 		try (ResultSet results2 = DBManager.searchdsStatement.executeQuery()) {
 			while (results2.next()) {
-				List<Integer> lineNumberPerSentence = new ArrayList<Integer>();
+				List<Integer> lineNumberPerSentence = new ArrayList<>();
 				path2 = results2.getString(1);
 				name2 = results2.getString(2);
 				num2 = results2.getInt(3);
@@ -277,7 +272,7 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 			method.setNormalizedSentences(normalizedSentences);
 			method.setOriginalSentences(originalSentences);
 			method.setLineNumberPerSentence(lineNumberPerSentenceList);
-			CodeFragmentClonePair<Method> cfClonePair = new CodeFragmentClonePair<Method>(method, (Method) method2,
+			CodeFragmentClonePair<Method> cfClonePair = new CodeFragmentClonePair<>(method, (Method) method2,
 					null, cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
 			outputCodeFragmentClonePair(cfClonePair, i);
 		} else {
@@ -285,7 +280,7 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 			file.setNormalizedSentences(normalizedSentences);
 			file.setOriginalSentences(originalSentences);
 			file.setLineNumberPerSentence(lineNumberPerSentenceList);
-			CodeFragmentClonePair<File> cfClonePair = new CodeFragmentClonePair<File>(file, (File) method2, null,
+			CodeFragmentClonePair<File> cfClonePair = new CodeFragmentClonePair<>(file, (File) method2, null,
 					cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
 			outputCodeFragmentClonePair(cfClonePair, i);
 		}

@@ -19,9 +19,9 @@ public class HashCreator {
 	}
 
 	public static String convertString(byte[] digest) {
-		StringBuffer buffer = new StringBuffer();
-		for (int i = 0; i < digest.length; i++) {
-			String tmp = Integer.toHexString(digest[i] & 0xff);
+		StringBuilder buffer = new StringBuilder();
+		for (byte aDigest : digest) {
+			String tmp = Integer.toHexString(aDigest & 0xff);
 			if (tmp.length() == 1)
 				buffer.append('0').append(tmp);
 			else

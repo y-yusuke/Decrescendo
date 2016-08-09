@@ -23,9 +23,9 @@ public class Main {
 		if (Config.method)
 			methods = new MethodCloneDetector().execute(files);
 
-		if (Config.method && Config.codefragment)
+		if (Config.method && Config.codeFragment)
 			new CodeFragmentCloneDetector<Method>().execute(methods);
-		else if (!Config.method && Config.codefragment)
+		else if (!Config.method && Config.codeFragment)
 			new CodeFragmentCloneDetector<File>().execute(files);
 
 		DBManager.closeDB();

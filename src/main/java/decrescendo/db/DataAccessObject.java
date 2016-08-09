@@ -8,17 +8,17 @@ import decrescendo.granularity.File;
 import decrescendo.granularity.Granularity;
 import decrescendo.granularity.Method;
 
-public class DataAcsessObject {
+public class DataAccessObject {
 
 	public static void insertFileCloneInfo(File fileClone1, File fileClone2, int count, int cloneSetId) {
 		try {
 			DBManager.fcStatement.setInt(1, count);
 			DBManager.fcStatement.setString(2, fileClone1.getPath());
-			DBManager.fcStatement.setInt(3, fileClone1.getStartline());
-			DBManager.fcStatement.setInt(4, fileClone1.getEndline());
+			DBManager.fcStatement.setInt(3, fileClone1.getStartLine());
+			DBManager.fcStatement.setInt(4, fileClone1.getEndLine());
 			DBManager.fcStatement.setString(5, fileClone2.getPath());
-			DBManager.fcStatement.setInt(6, fileClone2.getStartline());
-			DBManager.fcStatement.setInt(7, fileClone2.getEndline());
+			DBManager.fcStatement.setInt(6, fileClone2.getStartLine());
+			DBManager.fcStatement.setInt(7, fileClone2.getEndLine());
 			DBManager.fcStatement.setInt(8, cloneSetId);
 			if (fileClone1.getOriginalHash().equals(fileClone2.getOriginalHash()))
 				DBManager.fcStatement.setInt(9, 1);
@@ -37,13 +37,13 @@ public class DataAcsessObject {
 			DBManager.mcStatement.setString(2, methodClone1.getPath());
 			DBManager.mcStatement.setString(3, methodClone1.getName());
 			DBManager.mcStatement.setInt(4, methodClone1.getNum());
-			DBManager.mcStatement.setInt(5, methodClone1.getStartline());
-			DBManager.mcStatement.setInt(6, methodClone1.getEndline());
+			DBManager.mcStatement.setInt(5, methodClone1.getStartLine());
+			DBManager.mcStatement.setInt(6, methodClone1.getEndLine());
 			DBManager.mcStatement.setString(7, methodClone2.getPath());
 			DBManager.mcStatement.setString(8, methodClone2.getName());
 			DBManager.mcStatement.setInt(9, methodClone2.getNum());
-			DBManager.mcStatement.setInt(10, methodClone2.getStartline());
-			DBManager.mcStatement.setInt(11, methodClone2.getEndline());
+			DBManager.mcStatement.setInt(10, methodClone2.getStartLine());
+			DBManager.mcStatement.setInt(11, methodClone2.getEndLine());
 			DBManager.mcStatement.setInt(12, cloneSetId);
 			if (methodClone1.getOriginalHash().equals(methodClone2.getOriginalHash()))
 				DBManager.mcStatement.setInt(13, 1);
@@ -84,8 +84,8 @@ public class DataAcsessObject {
 			DBManager.mStatement.setString(1, e.getPath());
 			DBManager.mStatement.setString(2, e.getName());
 			DBManager.mStatement.setInt(3, e.getNum());
-			DBManager.mStatement.setInt(4, e.getStartline());
-			DBManager.mStatement.setInt(5, e.getEndline());
+			DBManager.mStatement.setInt(4, e.getStartLine());
+			DBManager.mStatement.setInt(5, e.getEndLine());
 			DBManager.mStatement.setString(6, e.getOriginalHash());
 			DBManager.mStatement.setString(7, e.getNormalizedHash());
 			DBManager.mStatement.addBatch();

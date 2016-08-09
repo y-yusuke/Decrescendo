@@ -7,10 +7,10 @@ public class File extends Granularity {
 
 	public File(String path, String source, String originalHash, String normalizedHash,
 			List<String> originalTokens, List<String> normalizedTokens, List<Integer> lineNumberPerToken,
-			int startline, int endline, int representative) {
+			int startLine, int endLine, int representative) {
 		super(path, "", originalHash, normalizedHash,
 				originalTokens, normalizedTokens, lineNumberPerToken,
-				startline, endline, 0, representative);
+				startLine, endLine, 0, representative);
 		this.source = source;
 	}
 

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import decrescendo.config.Config;
 import decrescendo.db.DBManager;
-import decrescendo.db.DataAcsessObject;
+import decrescendo.db.DataAccessObject;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
 import decrescendo.lexer.method.JavaMethodLexer;
@@ -17,7 +17,7 @@ import decrescendo.lexer.method.MethodLexer;
 import decrescendo.lexer.sentence.SentenceLexer;
 
 public class MethodCloneDetector {
-	int count;
+	private int count;
 
 	public MethodCloneDetector() {
 		this.count = 0;
@@ -29,6 +29,7 @@ public class MethodCloneDetector {
 		MethodLexer methodLexer = null;
 		if (Config.language.equals("java"))
 			methodLexer = new JavaMethodLexer();
+		if (methodLexer == null) throw new AssertionError();
 		HashSet<Method> methodSet = methodLexer.getMethodSet(files);
 
 		System.out.print("Method : " + methodSet.size() + " -> ");
@@ -64,7 +65,7 @@ public class MethodCloneDetector {
 				for (int q = p + 1; q < methodCloneSet.size(); q++) {
 					Method methodClone2 = methodCloneSet.get(q);
 
-					DataAcsessObject.insertMethodCloneInfo(methodClone1, methodClone2, count, i);
+					DataAccessObject.insertMethodCloneInfo(methodClone1, methodClone2, count, i);
 
 					if (count % 1000 == 0)
 						DBManager.mcStatement.executeBatch();
@@ -79,7 +80,7 @@ public class MethodCloneDetector {
 					}
 
 					if (p == 0) {
-						if (Config.codefragment) {
+						if (Config.codeFragment) {
 							insertDeleteMethodInfo(methodClone2);
 							methodSet.remove(methodClone2);
 						}
@@ -87,7 +88,7 @@ public class MethodCloneDetector {
 				}
 			}
 
-			if (Config.codefragment) {
+			if (Config.codeFragment) {
 				// 0 ... not representative file and method
 				// 1 ... representative file
 				// 2 ... representative method
@@ -107,7 +108,7 @@ public class MethodCloneDetector {
 
 	private void insertDeleteMethodInfo(Method method) throws SQLException {
 		Method separatedMethod = SentenceLexer.separateSentences(method);
-		DataAcsessObject.insertDeleteSentenceInfo(separatedMethod);
+		DataAccessObject.insertDeleteSentenceInfo(separatedMethod);
 		DBManager.sStatement.executeBatch();
 	}
 
@@ -138,7 +139,7 @@ public class MethodCloneDetector {
 							results2.getString(6), results2.getString(7),
 							null, null, null,
 							results2.getInt(4), results2.getInt(5), results2.getInt(3), 0);
-					DataAcsessObject.insertMethodCloneInfo(methodClone, methodClone2, count, i);
+					DataAccessObject.insertMethodCloneInfo(methodClone, methodClone2, count, i);
 					count++;
 				}
 			}

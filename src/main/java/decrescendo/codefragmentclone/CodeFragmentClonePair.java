@@ -3,13 +3,13 @@ package decrescendo.codefragmentclone;
 import java.util.List;
 
 public class CodeFragmentClonePair<T> {
-	T clone1;
-	T clone2;
-	String commonHash;
-	List<Integer> cloneIndexes1;
-	List<Integer> cloneIndexes2;
-	List<Integer> gapIndexes1;
-	List<Integer> gapIndexes2;
+	private T clone1;
+	private T clone2;
+	private String commonHash;
+	private List<Integer> cloneIndexes1;
+	private List<Integer> cloneIndexes2;
+	private List<Integer> gapIndexes1;
+	private List<Integer> gapIndexes2;
 
 	public CodeFragmentClonePair(T clone1, T clone2, String commonHash,
 			List<Integer> cloneIndexes1, List<Integer> cloneIndexes2,

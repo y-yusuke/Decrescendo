@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import decrescendo.config.Config;
 import decrescendo.db.DBManager;
-import decrescendo.db.DataAcsessObject;
+import decrescendo.db.DataAccessObject;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
 import decrescendo.lexer.file.FileLexer;
@@ -25,6 +25,7 @@ public class FileCloneDetector {
 		FileLexer fileLexer = null;
 		if (Config.language.equals("java"))
 			fileLexer = new JavaFileLexer();
+		if (fileLexer == null) throw new AssertionError();
 		HashSet<File> fileSet = fileLexer.getFileSet(path);
 
 		if (Config.file) {
@@ -63,14 +64,14 @@ public class FileCloneDetector {
 				for (int q = p + 1; q < fileCloneSet.size(); q++) {
 					File fileClone2 = fileCloneSet.get(q);
 
-					DataAcsessObject.insertFileCloneInfo(fileClone1, fileClone2, count, i);
+					DataAccessObject.insertFileCloneInfo(fileClone1, fileClone2, count, i);
 
 					if (count % 1000 == 0)
 						DBManager.fcStatement.executeBatch();
 					count++;
 
 					if (p == 0) {
-						if (Config.method || Config.codefragment) {
+						if (Config.method || Config.codeFragment) {
 							insertDeleteFileInfo(fileClone2);
 							fileSet.remove(fileClone2);
 						}
@@ -78,7 +79,7 @@ public class FileCloneDetector {
 				}
 			}
 
-			if (Config.method || Config.codefragment) {
+			if (Config.method || Config.codeFragment) {
 				// 0 ... not representative file
 				// 1 ... representative file
 				File tmpFile = fileCloneSet.get(0);
@@ -97,22 +98,23 @@ public class FileCloneDetector {
 				MethodLexer methodLexer = null;
 				if (Config.language.equals("java"))
 					methodLexer = new JavaMethodLexer();
+				if (methodLexer == null) throw new AssertionError();
 				HashSet<Method> methodSet = methodLexer.getMethodInfo(file.getPath(), file.getSource(), 0);
 
 				if (methodSet != null) {
-					methodSet.forEach(e -> DataAcsessObject.insertDeleteMethodInfo(e));
+					methodSet.forEach(DataAccessObject::insertDeleteMethodInfo);
 					DBManager.mStatement.executeBatch();
 				}
 
-				if (Config.codefragment) {
+				if (Config.codeFragment) {
 					List<Method> separatedMethodList = CodeFragmentCloneDetector.addSeparatedSentenceInfo(methodSet);
-					separatedMethodList.forEach(e -> DataAcsessObject.insertDeleteSentenceInfo(e));
+					separatedMethodList.forEach(DataAccessObject::insertDeleteSentenceInfo);
 					DBManager.sStatement.executeBatch();
 				}
 
-			} else if (Config.codefragment) {
+			} else if (Config.codeFragment) {
 				File separatedFile = SentenceLexer.separateSentences(file);
-				DataAcsessObject.insertDeleteSentenceInfo(separatedFile);
+				DataAccessObject.insertDeleteSentenceInfo(separatedFile);
 				DBManager.sStatement.executeBatch();
 			}
 		} catch (SQLException e1) {

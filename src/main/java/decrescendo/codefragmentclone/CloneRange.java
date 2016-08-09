@@ -5,13 +5,13 @@ public class CloneRange {
 	private int startLine;
 	private int endLine;
 	private String gapLines;
-	private int gapLinesize;
+	private int gapLineSize;
 
-	public CloneRange(int startLine, int endLine, String gapLines, int gapLinesize) {
+	public CloneRange(int startLine, int endLine, String gapLines, int gapLineSize) {
 		this.startLine = startLine;
 		this.endLine = endLine;
 		this.gapLines = gapLines;
-		this.gapLinesize = gapLinesize;
+		this.gapLineSize = gapLineSize;
 	}
 
 	public int getStartLine() {
@@ -26,8 +26,8 @@ public class CloneRange {
 		return gapLines;
 	}
 
-	public int getGapLinesize() {
-		return gapLinesize;
+	public int getGapLineSize() {
+		return gapLineSize;
 	}
 
 }

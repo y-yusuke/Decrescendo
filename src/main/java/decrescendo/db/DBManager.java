@@ -1,5 +1,7 @@
 package decrescendo.db;
 
+import decrescendo.config.Config;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -7,8 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DBManager {
-	public static Connection connection;
-	public static Statement statement;
+	private static Connection connection;
+	private static Statement statement;
 	public static PreparedStatement mStatement;
 	public static PreparedStatement sStatement;
 	public static PreparedStatement fcStatement;
@@ -23,7 +25,7 @@ public class DBManager {
 
 	public static void dbSetup() throws ClassNotFoundException, SQLException {
 		Class.forName("org.sqlite.JDBC");
-		connection = DriverManager.getConnection("jdbc:sqlite:F:/results.db");
+		connection = DriverManager.getConnection("jdbc:sqlite:" + Config.outputDirectory);
 		connection.setAutoCommit(false);
 		statement = connection.createStatement();
 		initialDB();

@@ -27,15 +27,14 @@ public class JavaFileLexer implements FileLexer {
 	@Override
 	public HashSet<File> getFileSet(String path) throws Exception {
 		Path target = Paths.get(path);
-		HashSet<File> fileSet = Files.walk(target)
+		return Files.walk(target)
 				.parallel()
 				.filter(e -> e.toFile()
 				.isFile())
 				.filter(e -> e.getFileName().toString()
-				.endsWith(".java")).map(e -> getFileInfo(e))
+				.endsWith(".java")).map(this::getFileInfo)
 				.filter(e -> e != null)
 				.collect(Collectors.toCollection(HashSet::new));
-		return fileSet;
 	}
 
 	@Override
@@ -43,17 +42,18 @@ public class JavaFileLexer implements FileLexer {
 		try {
 			String source = getJavaFileSourceCode(path);
 			Scanner scanner = new Scanner();
+			if (source == null) throw new AssertionError();
 			scanner.setSource(source.toCharArray());
 			scanner.recordLineSeparator = true;
 			scanner.sourceLevel = ClassFileConstants.JDK1_8;
 
-			StringBuilder originalsb = new StringBuilder();
-			StringBuilder normalizedsb = new StringBuilder();
+			StringBuilder originalSb = new StringBuilder();
+			StringBuilder normalizedSb = new StringBuilder();
 			List<String> normalizedTokens = new ArrayList<>();
 			List<String> originalTokens = new ArrayList<>();
 			List<Integer> lineNumberPerToken = new ArrayList<>();
-			int endLine = 0;
-			int tokensize = 0;
+			int endLine;
+			int tokenSize = 0;
 
 			label: while (true) {
 				switch (scanner.getNextToken()) {
@@ -95,33 +95,33 @@ public class JavaFileLexer implements FileLexer {
 				case TokenNameDoubleLiteral:
 				case TokenNameCharacterLiteral:
 				case TokenNameStringLiteral:
-					normalizedsb.append("$");
-					originalsb.append(scanner.getCurrentTokenString());
+					normalizedSb.append("$");
+					originalSb.append(scanner.getCurrentTokenString());
 
 					if (!Config.method) {
 						normalizedTokens.add("$");
 						originalTokens.add(scanner.getCurrentTokenString());
 						lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
 					}
-					tokensize++;
+					tokenSize++;
 					break;
 
 				default:
-					normalizedsb.append(scanner.getCurrentTokenString());
+					normalizedSb.append(scanner.getCurrentTokenString());
 
 					if (!Config.method) {
 						normalizedTokens.add(scanner.getCurrentTokenString());
 						originalTokens.add(scanner.getCurrentTokenString());
 						lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
 					}
-					tokensize++;
+					tokenSize++;
 				}
 			}
 
-			if (tokensize >= Config.fMinTokens)
+			if (tokenSize >= Config.fMinTokens)
 				return new File(path.toString(), source,
-						HashCreator.convertString(HashCreator.getHash(normalizedsb.toString())),
-						HashCreator.convertString(HashCreator.getHash(originalsb.toString())),
+						HashCreator.convertString(HashCreator.getHash(normalizedSb.toString())),
+						HashCreator.convertString(HashCreator.getHash(originalSb.toString())),
 						originalTokens, normalizedTokens, lineNumberPerToken, 1, endLine, 0);
 			else
 				return null;
