@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class Config {
-	public static String targetDirectory;
-	public static String outputDirectory;
+	public static String targetPath;
+	public static String outputPath;
 	public static String language;
 	public static boolean file;
 	public static boolean method;
@@ -21,11 +21,11 @@ public class Config {
 		try (FileInputStream fr = new FileInputStream("./decrescendo.properties")) {
 			prop.load(fr);
 		}
-		targetDirectory = prop.getProperty("targetDirectory");
-		if (targetDirectory == null)
+		targetPath = prop.getProperty("targetPath");
+		if (targetPath == null)
 			throw new RuntimeException();
-		outputDirectory = prop.getProperty("outputDirectory");
-		if (outputDirectory == null)
+		outputPath = prop.getProperty("outputPath");
+		if (outputPath == null)
 			throw new RuntimeException();
 		language = prop.getProperty("language");
 		file = Boolean.valueOf(prop.getProperty("file"));

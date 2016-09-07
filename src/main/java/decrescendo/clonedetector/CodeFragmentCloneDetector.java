@@ -186,13 +186,13 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		if (cf1.isRepresentative() == 1)
 			searchCodeFragmentCloneInRepresentativeFile(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 
-		if (cf1.isRepresentative() == 2)
+		if (cf1.isRepresentative() == 2 || cf1.isRepresentative() == 3)
 			searchCodeFragmentCloneInRepresentativeMethod(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, i);
 
 		if (cf2.isRepresentative() == 1)
 			searchCodeFragmentCloneInRepresentativeFile(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, i);
 
-		if (cf2.isRepresentative() == 2)
+		if (cf2.isRepresentative() == 2 || cf2.isRepresentative() == 3)
 			searchCodeFragmentCloneInRepresentativeMethod(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, i);
 	}
 

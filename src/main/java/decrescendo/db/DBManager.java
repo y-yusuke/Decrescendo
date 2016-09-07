@@ -25,7 +25,7 @@ public class DBManager {
 
 	public static void dbSetup() throws ClassNotFoundException, SQLException {
 		Class.forName("org.sqlite.JDBC");
-		connection = DriverManager.getConnection("jdbc:sqlite:" + Config.outputDirectory);
+		connection = DriverManager.getConnection("jdbc:sqlite:" + Config.outputPath);
 		connection.setAutoCommit(false);
 		statement = connection.createStatement();
 		initialDB();

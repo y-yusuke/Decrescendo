@@ -17,7 +17,7 @@ public class Main {
 		Config.setConfig();
 		DBManager.dbSetup();
 
-		HashSet<File> files = new FileCloneDetector().execute(Config.targetDirectory);
+		HashSet<File> files = new FileCloneDetector().execute(Config.targetPath);
 
 		HashSet<Method> methods = null;
 		if (Config.method)
