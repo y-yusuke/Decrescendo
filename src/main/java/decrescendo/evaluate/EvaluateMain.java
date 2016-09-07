@@ -140,7 +140,18 @@ public class EvaluateMain {
                     Integer.parseInt(data[7]),
                     getGapLines(data[10])
             );
-            clonePairList.add(cp);
+
+            int gapSize1;
+            if(cp.getGapLine1() != null) gapSize1 = cp.getGapLine1().size();
+            else gapSize1 = 0;
+
+            int gapSize2;
+            if(cp.getGapLine2() != null) gapSize2 = cp.getGapLine2().size();
+            else gapSize2 = 0;
+
+            if(cp.getEndLine1() - cp.getStartLine1() + 1 - gapSize1 > 0
+                    && cp.getEndLine2() - cp.getStartLine2() + 1 - gapSize2 > 0)
+                clonePairList.add(cp);
         }
         return clonePairList;
     }
