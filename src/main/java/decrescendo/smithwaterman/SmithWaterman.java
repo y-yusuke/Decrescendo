@@ -21,7 +21,7 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 	final private int gap = -1;
 
 	public SmithWaterman(T target1, T target2) {
-		if (target1.getNormalizedSentences().size() >= target2.getNormalizedSentences().size()) {
+		if (target1.getPath().compareTo(target2.getPath()) > 0) {
 			this.target1 = target1;
 			this.target2 = target2;
 			this.one = target1.getNormalizedSentences();
@@ -37,7 +37,7 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 	public List<CodeFragmentClonePair<T>> call() {
 		initialMatrix();
 		calculateScore();
-		// printMatrix();
+		//printMatrix();
 		return traceBack();
 	}
 
@@ -90,9 +90,9 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		List<Integer> gapIndexes2 = new ArrayList<>();
 		int gapTokenSize1 = 0;
 		int gapTokenSize2 = 0;
-		int a[] = getLocalMaxCell(i, j);
-		i = a[0];
-		j = a[1];
+		int localMaxCell[] = getLocalMaxCell(i, j);
+		i = localMaxCell[0];
+		j = localMaxCell[1];
 
 		while (i != 0 && j != 0) {
 			int max = Math.max(matrix[i - 1][j - 1], Math.max(matrix[i - 1][j], matrix[i][j - 1]));
@@ -105,19 +105,28 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 			}
 			// diag case
 			else if (max == matrix[i - 1][j - 1]) {
-				commonSb.append(HashCreator.convertString(one.get(i)));
 				cloneIndexes1.add(i);
 				cloneIndexes2.add(j);
+				if (java.util.Arrays.equals(one.get(i), two.get(j))) {
+					commonSb.append(HashCreator.convertString(one.get(i)));
+				} else {
+					gapIndexes1.add(i);
+					gapTokenSize1 += target1.getLineNumberPerSentence().get(i).size();
+					gapIndexes2.add(j);
+					gapTokenSize2 += target2.getLineNumberPerSentence().get(j).size();
+				}
 				i = i - 1;
 				j = j - 1;
-				// left case
-			} else if (max == matrix[i - 1][j]) {
+			}
+			// left case
+			else if (max == matrix[i - 1][j]) {
 				cloneIndexes1.add(i);
 				gapIndexes1.add(i);
 				gapTokenSize1 += target1.getLineNumberPerSentence().get(i).size();
 				i = i - 1;
-				// up case
-			} else {
+			}
+			// up case
+			else {
 				cloneIndexes2.add(j);
 				gapIndexes2.add(j);
 				gapTokenSize2 += target2.getLineNumberPerSentence().get(j).size();
@@ -136,13 +145,13 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 	}
 
 	private int[] getLocalMaxCell(int i, int j) {
-		int a[] = new int[2];
+		int localMaxCell[] = new int[2];
 		while (i != 0 && j != 0) {
-			int max = Math.max(matrix[i][j],
+			int max = Math.max(0,
 					Math.max(matrix[i - 1][j - 1], Math.max(matrix[i - 1][j], matrix[i][j - 1])));
-			if (max == matrix[i][j]) {
-				a[0] = i;
-				a[1] = j;
+			if (max < matrix[i][j]) {
+				localMaxCell[0] = i;
+				localMaxCell[1] = j;
 				break;
 			} else if (max == matrix[i - 1][j - 1]) {
 				i = i - 1;
@@ -153,16 +162,19 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 				j = j - 1;
 			}
 		}
-		return a;
+		return localMaxCell;
 	}
 
 	private boolean checkClone(List<Integer> cloneIndexes1, List<Integer> cloneIndexes2, int gapTokenSize1,
-			int gapTokenSize2) {
+							   int gapTokenSize2) {
 		int tokenSize1 = getTokenSize(target1, cloneIndexes1);
 		int tokenSize2 = getTokenSize(target2, cloneIndexes2);
 
-		return !(tokenSize1 < Config.cfMinTokens || tokenSize2 < Config.cfMinTokens) && !((double) gapTokenSize1 / tokenSize1 >= Config.gapRate || (double) gapTokenSize2 / tokenSize2 >= Config.gapRate);
-
+		if (tokenSize1 < Config.cfMinTokens) return false;
+		if (tokenSize2 < Config.cfMinTokens) return false;
+		if ((double) gapTokenSize1 / (double) tokenSize1 > Config.gapRate) return false;
+		if ((double) gapTokenSize2 / (double) tokenSize2 > Config.gapRate) return false;
+		return true;
 	}
 
 	private int getTokenSize(T clone, List<Integer> cloneIndexes) {
@@ -172,12 +184,12 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		return tokenSize;
 	}
 
-/*	private void printMatrix() {
+	private void printMatrix() {
 		for (int i = 0; i < one.size(); i++) {
 			for (int j = 0; j < two.size(); j++) {
 				System.out.print(String.format("%5d", matrix[i][j]) + " ");
 			}
 			System.out.println();
 		}
-	}*/
+	}
 }
