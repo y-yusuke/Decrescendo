@@ -4,6 +4,7 @@ import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +34,7 @@ public class JavaMethodLexer implements MethodLexer {
 				.parallel()
 				.map(e -> getMethodInfo(e.getPath(), e.getSource(), e.isRepresentative()))
 				.filter(e -> e != null)
-				.flatMap(e -> e.stream())
+				.flatMap(Collection::stream)
 				.collect(Collectors.toCollection(HashSet::new));
 	}
 
@@ -46,7 +47,7 @@ public class JavaMethodLexer implements MethodLexer {
 		final CompilationUnit unit = (CompilationUnit) parser.createAST(new NullProgressMonitor());
 
 		unit.accept(new ASTVisitor() {
-			int methodNum = 0;
+			int methodOrder = 0;
 
 			@Override
 			public boolean visit(MethodDeclaration node) {
@@ -63,13 +64,14 @@ public class JavaMethodLexer implements MethodLexer {
 					scanner.recordLineSeparator = true;
 					scanner.sourceLevel = ClassFileConstants.JDK1_8;
 
-					StringBuilder originalsb = new StringBuilder();
-					StringBuilder normalizedsb = new StringBuilder();
+					StringBuilder originalSb = new StringBuilder();
+					StringBuilder normalizedSb = new StringBuilder();
 					List<String> normalizedTokens = new ArrayList<>();
 					List<String> originalTokens = new ArrayList<>();
 					List<Integer> lineNumberPerToken = new ArrayList<>();
 
-					label: while (true) {
+					label:
+					while (true) {
 						switch (scanner.getNextToken()) {
 							case TokenNameEOF:
 								break label;
@@ -97,8 +99,8 @@ public class JavaMethodLexer implements MethodLexer {
 							case TokenNameDoubleLiteral:
 							case TokenNameCharacterLiteral:
 							case TokenNameStringLiteral:
-								normalizedsb.append("$");
-								originalsb.append(scanner.getCurrentTokenString());
+								normalizedSb.append("$");
+								originalSb.append(scanner.getCurrentTokenString());
 								normalizedTokens.add("$");
 								originalTokens.add(scanner.getCurrentTokenString());
 								lineNumberPerToken
@@ -106,8 +108,8 @@ public class JavaMethodLexer implements MethodLexer {
 								break;
 
 							default:
-								normalizedsb.append(scanner.getCurrentTokenString());
-								originalsb.append(scanner.getCurrentTokenString());
+								normalizedSb.append(scanner.getCurrentTokenString());
+								originalSb.append(scanner.getCurrentTokenString());
 								normalizedTokens.add(scanner.getCurrentTokenString());
 								originalTokens.add(scanner.getCurrentTokenString());
 								lineNumberPerToken
@@ -116,13 +118,22 @@ public class JavaMethodLexer implements MethodLexer {
 					}
 
 					if (normalizedTokens.size() >= Config.mMinTokens) {
-						methodSet.add(new Method(path, node.getName().toString(),
-								HashCreator.convertString(HashCreator.getHash(originalsb.toString())),
-								HashCreator.convertString(HashCreator.getHash(normalizedsb.toString())),
-								originalTokens, normalizedTokens, lineNumberPerToken,
-								startLine, endLine, methodNum, representative));
+						Method method = new Method();
+						method.setPath(path);
+						method.setName(node.getName().toString());
+						method.setNormalizedHash(HashCreator.convertString(HashCreator.getHash(normalizedSb.toString())));
+						method.setOriginalHash(HashCreator.convertString(HashCreator.getHash(originalSb.toString())));
+						method.setNormalizedTokens(normalizedTokens);
+						method.setOriginalTokens(originalTokens);
+						method.setLineNumberPerToken(lineNumberPerToken);
+						method.setStartLine(startLine);
+						method.setEndLine(endLine);
+						method.setOrder(methodOrder);
+						method.setRepresentative(representative);
+
+						methodSet.add(method);
 					}
-					methodNum++;
+					methodOrder++;
 					return super.visit(node);
 				} catch (InvalidInputException e) {
 					e.printStackTrace();

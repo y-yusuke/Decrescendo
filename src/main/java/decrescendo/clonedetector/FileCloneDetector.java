@@ -17,6 +17,7 @@ import decrescendo.lexer.method.MethodLexer;
 import decrescendo.lexer.sentence.SentenceLexer;
 
 public class FileCloneDetector {
+	private int clonePairId;
 
 	public FileCloneDetector() {
 	}
@@ -25,18 +26,21 @@ public class FileCloneDetector {
 		FileLexer fileLexer = null;
 		if (Config.language.equals("java"))
 			fileLexer = new JavaFileLexer();
-		if (fileLexer == null) throw new AssertionError();
+
+		if (fileLexer == null)
+			throw new AssertionError();
+
+		System.out.println("Parsing File...");
 		HashSet<File> fileSet = fileLexer.getFileSet(path);
 
 		if (Config.file) {
-			System.out.println("Start to detect File Code Clone");
-			System.out.print("File : " + fileSet.size() + " -> ");
-
+			System.out.println("Detecting File Code Clone...");
 			List<List<File>> fileCloneSets = getFileCloneSets(fileSet);
+
+			System.out.println("Outputting File Code Clone Result...");
 			fileSet = outputFileCloneResult(fileCloneSets, fileSet);
 
-			System.out.println(fileSet.size());
-			System.out.println("Finish to detect File Code Clone");
+			System.out.println("Detected " + clonePairId + " File Code Clone Pair\n");
 		}
 
 		return fileSet;
@@ -54,23 +58,23 @@ public class FileCloneDetector {
 
 	private HashSet<File> outputFileCloneResult(List<List<File>> fileCloneSets, HashSet<File> fileSet)
 			throws SQLException {
-		int count = 0;
-		for (int i = 0; i < fileCloneSets.size(); i++) {
-			List<File> fileCloneSet = fileCloneSets.get(i);
+		for (int cloneSetId = 0; cloneSetId < fileCloneSets.size(); cloneSetId++) {
+			List<File> fileCloneSet = fileCloneSets.get(cloneSetId);
 
-			for (int p = 0; p < fileCloneSet.size() - 1; p++) {
-				File fileClone1 = fileCloneSet.get(p);
+			for (int i = 0; i < fileCloneSet.size() - 1; i++) {
+				File fileClone1 = fileCloneSet.get(i);
 
-				for (int q = p + 1; q < fileCloneSet.size(); q++) {
-					File fileClone2 = fileCloneSet.get(q);
+				for (int j = i + 1; j < fileCloneSet.size(); j++) {
+					File fileClone2 = fileCloneSet.get(j);
 
-					DataAccessObject.insertFileCloneInfo(fileClone1, fileClone2, count, i);
+					DataAccessObject.insertFileCloneInfo(fileClone1, fileClone2, clonePairId, cloneSetId);
 
-					if (count % 1000 == 0)
+					if (clonePairId % 1000 == 0)
 						DBManager.fcStatement.executeBatch();
-					count++;
 
-					if (p == 0) {
+					clonePairId++;
+
+					if (i == 0) {
 						if (Config.method || Config.codeFragment) {
 							insertDeleteFileInfo(fileClone2);
 							fileSet.remove(fileClone2);
@@ -88,37 +92,37 @@ public class FileCloneDetector {
 				fileSet.add(tmpFile);
 			}
 		}
+
 		DBManager.fcStatement.executeBatch();
+
 		return fileSet;
 	}
 
-	private void insertDeleteFileInfo(File file) {
-		try {
-			if (Config.method) {
-				MethodLexer methodLexer = null;
-				if (Config.language.equals("java"))
-					methodLexer = new JavaMethodLexer();
-				if (methodLexer == null) throw new AssertionError();
-				HashSet<Method> methodSet = methodLexer.getMethodInfo(file.getPath(), file.getSource(), 0);
+	private void insertDeleteFileInfo(File file) throws SQLException {
+		if (Config.method) {
+			MethodLexer methodLexer = null;
+			if (Config.language.equals("java"))
+				methodLexer = new JavaMethodLexer();
 
-				if (methodSet != null) {
-					methodSet.forEach(DataAccessObject::insertDeleteMethodInfo);
-					DBManager.mStatement.executeBatch();
-				}
+			if (methodLexer == null)
+				throw new AssertionError();
 
-				if (Config.codeFragment) {
-					List<Method> separatedMethodList = CodeFragmentCloneDetector.addSeparatedSentenceInfo(methodSet);
-					separatedMethodList.forEach(DataAccessObject::insertDeleteSentenceInfo);
-					DBManager.sStatement.executeBatch();
-				}
+			HashSet<Method> methodSet = methodLexer.getMethodInfo(file.getPath(), file.getSource(), 0);
 
-			} else if (Config.codeFragment) {
-				File separatedFile = SentenceLexer.separateSentences(file);
-				DataAccessObject.insertDeleteSentenceInfo(separatedFile);
+			if (methodSet != null) {
+				methodSet.forEach(DataAccessObject::insertDeleteMethodInfo);
+				DBManager.mStatement.executeBatch();
+			}
+
+			if (methodSet != null && Config.codeFragment) {
+				List<Method> separatedMethodList = SentenceLexer.addSeparatedSentenceInfo(methodSet);
+				separatedMethodList.forEach(DataAccessObject::insertDeleteSentenceInfo);
 				DBManager.sStatement.executeBatch();
 			}
-		} catch (SQLException e1) {
-			e1.printStackTrace();
+		} else if (Config.codeFragment) {
+			File separatedFile = SentenceLexer.separateSentences(file);
+			DataAccessObject.insertDeleteSentenceInfo(separatedFile);
+			DBManager.sStatement.executeBatch();
 		}
 	}
 }

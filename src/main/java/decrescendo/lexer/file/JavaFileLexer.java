@@ -30,9 +30,9 @@ public class JavaFileLexer implements FileLexer {
 		return Files.walk(target)
 				.parallel()
 				.filter(e -> e.toFile()
-				.isFile())
+						.isFile())
 				.filter(e -> e.getFileName().toString()
-				.endsWith(".java")).map(this::getFileInfo)
+						.endsWith(".java")).map(this::getFileInfo)
 				.filter(e -> e != null)
 				.collect(Collectors.toCollection(HashSet::new));
 	}
@@ -55,75 +55,85 @@ public class JavaFileLexer implements FileLexer {
 			int endLine;
 			int tokenSize = 0;
 
-			label: while (true) {
+			label:
+			while (true) {
 				switch (scanner.getNextToken()) {
-				case TokenNameEOF:
-					endLine = scanner.getLineNumber(scanner.getCurrentTokenStartPosition());
-					break label;
+					case TokenNameEOF:
+						endLine = scanner.getLineNumber(scanner.getCurrentTokenStartPosition());
+						break label;
 
-				case TokenNameNotAToken:
-				case TokenNameWHITESPACE:
-				case TokenNameCOMMENT_LINE:
-				case TokenNameCOMMENT_BLOCK:
-				case TokenNameCOMMENT_JAVADOC:
-					break;
+					case TokenNameNotAToken:
+					case TokenNameWHITESPACE:
+					case TokenNameCOMMENT_LINE:
+					case TokenNameCOMMENT_BLOCK:
+					case TokenNameCOMMENT_JAVADOC:
+						break;
 
-				case TokenNameimport:
-				case TokenNamepackage:
-					label2: while (true) {
-						switch (scanner.getNextToken()) {
-						case TokenNameSEMICOLON:
-							break label2;
+					case TokenNameimport:
+					case TokenNamepackage:
+						label2:
+						while (true) {
+							switch (scanner.getNextToken()) {
+								case TokenNameSEMICOLON:
+									break label2;
+							}
 						}
-					}
-					break;
+						break;
 
-				case TokenNameLBRACE:
-				case TokenNameRBRACE:
-				case TokenNameSEMICOLON:
-					if (!Config.method) {
-						normalizedTokens.add(scanner.getCurrentTokenString());
-						originalTokens.add(scanner.getCurrentTokenString());
-						lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
-					}
-					break;
+					case TokenNameLBRACE:
+					case TokenNameRBRACE:
+					case TokenNameSEMICOLON:
+						if (!Config.method) {
+							normalizedTokens.add(scanner.getCurrentTokenString());
+							originalTokens.add(scanner.getCurrentTokenString());
+							lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
+						}
+						break;
 
-				case TokenNameIdentifier:
-				case TokenNameIntegerLiteral:
-				case TokenNameLongLiteral:
-				case TokenNameFloatingPointLiteral:
-				case TokenNameDoubleLiteral:
-				case TokenNameCharacterLiteral:
-				case TokenNameStringLiteral:
-					normalizedSb.append("$");
-					originalSb.append(scanner.getCurrentTokenString());
+					case TokenNameIdentifier:
+					case TokenNameIntegerLiteral:
+					case TokenNameLongLiteral:
+					case TokenNameFloatingPointLiteral:
+					case TokenNameDoubleLiteral:
+					case TokenNameCharacterLiteral:
+					case TokenNameStringLiteral:
+						normalizedSb.append("$");
+						originalSb.append(scanner.getCurrentTokenString());
 
-					if (!Config.method) {
-						normalizedTokens.add("$");
-						originalTokens.add(scanner.getCurrentTokenString());
-						lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
-					}
-					tokenSize++;
-					break;
+						if (!Config.method) {
+							normalizedTokens.add("$");
+							originalTokens.add(scanner.getCurrentTokenString());
+							lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
+						}
+						tokenSize++;
+						break;
 
-				default:
-					normalizedSb.append(scanner.getCurrentTokenString());
+					default:
+						normalizedSb.append(scanner.getCurrentTokenString());
 
-					if (!Config.method) {
-						normalizedTokens.add(scanner.getCurrentTokenString());
-						originalTokens.add(scanner.getCurrentTokenString());
-						lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
-					}
-					tokenSize++;
+						if (!Config.method) {
+							normalizedTokens.add(scanner.getCurrentTokenString());
+							originalTokens.add(scanner.getCurrentTokenString());
+							lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
+						}
+						tokenSize++;
 				}
 			}
 
-			if (tokenSize >= Config.fMinTokens)
-				return new File(path.toString(), source,
-						HashCreator.convertString(HashCreator.getHash(normalizedSb.toString())),
-						HashCreator.convertString(HashCreator.getHash(originalSb.toString())),
-						originalTokens, normalizedTokens, lineNumberPerToken, 1, endLine, 0);
-			else
+			if (tokenSize >= Config.fMinTokens) {
+				File file = new File();
+				file.setPath(path.toString());
+				file.setSource(source);
+				file.setNormalizedHash(HashCreator.convertString(HashCreator.getHash(normalizedSb.toString())));
+				file.setOriginalHash(HashCreator.convertString(HashCreator.getHash(originalSb.toString())));
+				file.setNormalizedTokens(normalizedTokens);
+				file.setOriginalTokens(originalTokens);
+				file.setLineNumberPerToken(lineNumberPerToken);
+				file.setStartLine(1);
+				file.setEndLine(endLine);
+				file.setRepresentative(0);
+				return file;
+			} else
 				return null;
 		} catch (InvalidInputException e) {
 			e.printStackTrace();

@@ -12,8 +12,6 @@ import java.util.Properties;
 
 public class EvaluateMain {
     private static String benchmarkDirectory;
-    private static String dataSetPath;
-    private static String outputPath;
     private static List<ClonePair> cloneReferences;
     private static int count;
 
@@ -27,12 +25,12 @@ public class EvaluateMain {
         if (benchmarkDirectory == null)
             throw new RuntimeException();
 
-        dataSetPath = prop.getProperty("dataSetPath");
+        String dataSetPath = prop.getProperty("dataSetPath");
         if (dataSetPath == null)
             throw new RuntimeException();
         cloneReferences = getCloneReferences(Paths.get(benchmarkDirectory + dataSetPath));
 
-        outputPath = prop.getProperty("outputPath");
+        String outputPath = prop.getProperty("outputPath");
         if (outputPath == null)
             throw new RuntimeException();
         Class.forName("org.sqlite.JDBC");
@@ -91,9 +89,9 @@ public class EvaluateMain {
 
             boolean flag = false;
             for(ClonePair cp : cloneReferences) {
-                int okValue;
-                int contain1;
-                int contain2;
+                double okValue;
+                double contain1;
+                double contain2;
 
                 if(cp.getPath1().equals(path1) && cp.getPath2().equals(path2)){
                     contain1 = getContainValue(startLine1, endLine1, gapLines1, cp.getStartLine1(), cp.getEndLine1(), cp.getGapLine1());
@@ -167,7 +165,7 @@ public class EvaluateMain {
         return gapLines;
     }
 
-    private static int getContainValue(int startLine1, int endLine1, List<Integer> gapLines1, int startLine2, int endLine2, List<Integer> gapLines2) {
+    private static double getContainValue(int startLine1, int endLine1, List<Integer> gapLines1, int startLine2, int endLine2, List<Integer> gapLines2) {
         int  commonLines = 0;
 
         for(int i = startLine1 ; i <= endLine1 ; i++) {
@@ -184,8 +182,8 @@ public class EvaluateMain {
         if(gapLines2 != null) gapSize2 = gapLines2.size();
         else gapSize2 = 0;
 
-        int contain1 = commonLines / (endLine1 - startLine1 + 1 - gapSize1);
-        int contain2 = commonLines / (endLine2 - startLine2 + 1 - gapSize2);
+        double contain1 = (double) commonLines / (double) (endLine1 - startLine1 + 1 - gapSize1);
+        double contain2 = (double) commonLines / (double) (endLine2 - startLine2 + 1 - gapSize2);
 
         if(contain1 > contain2) return contain1;
         else return contain2;
