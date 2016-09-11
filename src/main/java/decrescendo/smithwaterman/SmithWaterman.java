@@ -21,16 +21,25 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 	final private int gap = -1;
 
 	public SmithWaterman(T target1, T target2) {
-		if (target1.getPath().compareTo(target2.getPath()) > 0) {
+		int compare = target1.getPath().compareTo(target2.getPath());
+
+		if (compare > 0) {
 			this.target1 = target1;
 			this.target2 = target2;
 			this.one = target1.getNormalizedSentences();
 			this.two = target2.getNormalizedSentences();
 		} else {
-			this.target1 = target2;
-			this.target2 = target1;
-			this.one = target2.getNormalizedSentences();
-			this.two = target1.getNormalizedSentences();
+			if (compare == 0 && target1.getOrder() > target2.getOrder()) {
+				this.target1 = target1;
+				this.target2 = target2;
+				this.one = target1.getNormalizedSentences();
+				this.two = target2.getNormalizedSentences();
+			} else {
+				this.target1 = target2;
+				this.target2 = target1;
+				this.one = target2.getNormalizedSentences();
+				this.two = target1.getNormalizedSentences();
+			}
 		}
 	}
 
