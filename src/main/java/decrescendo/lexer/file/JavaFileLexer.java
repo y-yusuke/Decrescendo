@@ -49,9 +49,7 @@ public class JavaFileLexer implements FileLexer {
 
 			StringBuilder originalSb = new StringBuilder();
 			StringBuilder normalizedSb = new StringBuilder();
-			List<String> normalizedTokens = new ArrayList<>();
-			List<String> originalTokens = new ArrayList<>();
-			List<Integer> lineNumberPerToken = new ArrayList<>();
+			
 			int endLine;
 			int tokenSize = 0;
 
@@ -83,11 +81,6 @@ public class JavaFileLexer implements FileLexer {
 					case TokenNameLBRACE:
 					case TokenNameRBRACE:
 					case TokenNameSEMICOLON:
-						if (!Config.method) {
-							normalizedTokens.add(scanner.getCurrentTokenString());
-							originalTokens.add(scanner.getCurrentTokenString());
-							lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
-						}
 						break;
 
 					case TokenNameIdentifier:
@@ -99,23 +92,11 @@ public class JavaFileLexer implements FileLexer {
 					case TokenNameStringLiteral:
 						normalizedSb.append("$");
 						originalSb.append(scanner.getCurrentTokenString());
-
-						if (!Config.method) {
-							normalizedTokens.add("$");
-							originalTokens.add(scanner.getCurrentTokenString());
-							lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
-						}
 						tokenSize++;
 						break;
 
 					default:
 						normalizedSb.append(scanner.getCurrentTokenString());
-
-						if (!Config.method) {
-							normalizedTokens.add(scanner.getCurrentTokenString());
-							originalTokens.add(scanner.getCurrentTokenString());
-							lineNumberPerToken.add(scanner.getLineNumber(scanner.getCurrentTokenStartPosition()));
-						}
 						tokenSize++;
 				}
 			}
@@ -126,9 +107,6 @@ public class JavaFileLexer implements FileLexer {
 				file.setSource(source);
 				file.setNormalizedHash(HashCreator.convertString(HashCreator.getHash(normalizedSb.toString())));
 				file.setOriginalHash(HashCreator.convertString(HashCreator.getHash(originalSb.toString())));
-				file.setNormalizedTokens(normalizedTokens);
-				file.setOriginalTokens(originalTokens);
-				file.setLineNumberPerToken(lineNumberPerToken);
 				file.setStartLine(1);
 				file.setEndLine(endLine);
 				file.setRepresentative(0);

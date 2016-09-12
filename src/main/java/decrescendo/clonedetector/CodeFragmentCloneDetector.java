@@ -33,10 +33,18 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 	}
 
 	public void execute(HashSet<T> set) throws SQLException {
+		long start, stop;
+		double time;
+
 		System.out.println("Identifying Sentence...");
+		start = System.currentTimeMillis();
 		List<T> list = SentenceLexer.addSeparatedSentenceInfo(set);
+		stop = System.currentTimeMillis();
+		time = (double) (stop - start) / 1000D;
+		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
 
 		System.out.println("Detecting Code Fragment Clone...");
+		start = System.currentTimeMillis();
 		List<CodeFragmentClonePair<T>> cfClonePairList;
 		cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePair<T>>());
 
@@ -45,7 +53,7 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 
 		List<Future<List<CodeFragmentClonePair<T>>>> futures = new ArrayList<>();
 
-		for (int i = 0; i < list.size() - 1; i++) {
+		for (int i = 0; i < list.size(); i++) {
 			for (int j = i + 1; j < list.size(); j++) {
 				Future<List<CodeFragmentClonePair<T>>> future = service.submit(new SmithWaterman<>(list.get(i), list.get(j)));
 				futures.add(future);
@@ -70,9 +78,17 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 			}
 		}
 
+		stop = System.currentTimeMillis();
+		time = (double) (stop - start) / 1000D;
+		System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
+
 		System.out.println("Outputting Code Fragment Clone Result...");
+		start = System.currentTimeMillis();
 		List<List<CodeFragmentClonePair<T>>> cfCloneSets = getCodeFragmentCloneSets(cfClonePairList);
 		outputCodeFragmentCloneResult(cfCloneSets);
+		stop = System.currentTimeMillis();
+		time = (double) (stop - start) / 1000D;
+		System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
 
 		System.out.println("Detected " + clonePairId + " Code Fragment Clone Pair\n");
 	}

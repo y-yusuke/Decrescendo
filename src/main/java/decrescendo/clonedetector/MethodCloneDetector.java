@@ -24,6 +24,9 @@ public class MethodCloneDetector {
 	}
 
 	public HashSet<Method> execute(HashSet<File> files) throws SQLException, IOException {
+		long start, stop;
+		double time;
+
 		MethodLexer methodLexer = null;
 		if (Config.language.equals("java"))
 			methodLexer = new JavaMethodLexer();
@@ -32,15 +35,29 @@ public class MethodCloneDetector {
 			throw new AssertionError();
 
 		System.out.println("Parsing Method...");
+		start = System.currentTimeMillis();
 		HashSet<Method> methodSet = methodLexer.getMethodSet(files);
+		stop = System.currentTimeMillis();
+		time = (double) (stop - start) / 1000D;
+		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
 
-		System.out.println("Detecting Method Code Clone...");
-		List<List<Method>> methodCloneSets = getMethodCloneSets(methodSet);
+		if (Config.method) {
+			System.out.println("Detecting Method Code Clone...");
+			start = System.currentTimeMillis();
+			List<List<Method>> methodCloneSets = getMethodCloneSets(methodSet);
+			stop = System.currentTimeMillis();
+			time = (double) (stop - start) / 1000D;
+			System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
 
-		System.out.println("Outputting Method Code Clone Result...");
-		methodSet = outputMethodCloneResult(methodCloneSets, methodSet);
+			System.out.println("Outputting Method Code Clone Result...");
+			start = System.currentTimeMillis();
+			methodSet = outputMethodCloneResult(methodCloneSets, methodSet);
+			stop = System.currentTimeMillis();
+			time = (double) (stop - start) / 1000D;
+			System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
 
-		System.out.println("Detected " + clonePairId + " Method Code Clone Pair\n");
+			System.out.println("Detected " + clonePairId + " Method Code Clone Pair\n");
+		}
 
 		return methodSet;
 	}
