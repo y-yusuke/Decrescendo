@@ -7,6 +7,7 @@ import java.util.Properties;
 public class Config {
 	public static String targetPath;
 	public static String outputPath;
+	public static String logPath;
 	public static String language;
 	public static boolean file;
 	public static boolean method;
@@ -26,6 +27,9 @@ public class Config {
 			throw new RuntimeException();
 		outputPath = prop.getProperty("outputPath");
 		if (outputPath == null)
+			throw new RuntimeException();
+		logPath = prop.getProperty("logPath");
+		if (logPath == null)
 			throw new RuntimeException();
 		language = prop.getProperty("language");
 		file = Boolean.valueOf(prop.getProperty("file"));

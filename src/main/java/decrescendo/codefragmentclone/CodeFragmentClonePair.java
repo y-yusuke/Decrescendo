@@ -12,8 +12,8 @@ public class CodeFragmentClonePair<T> {
 	private List<Integer> gapIndexes2;
 
 	public CodeFragmentClonePair(T clone1, T clone2, String commonHash,
-			List<Integer> cloneIndexes1, List<Integer> cloneIndexes2,
-			List<Integer> gapIndexes1, List<Integer> gapIndexes2) {
+								 List<Integer> cloneIndexes1, List<Integer> cloneIndexes2,
+								 List<Integer> gapIndexes1, List<Integer> gapIndexes2) {
 		this.clone1 = clone1;
 		this.clone2 = clone2;
 		this.commonHash = commonHash;

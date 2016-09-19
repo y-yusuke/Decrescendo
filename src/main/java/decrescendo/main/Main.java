@@ -1,5 +1,7 @@
 package decrescendo.main;
 
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.util.HashSet;
 
@@ -10,8 +12,6 @@ import decrescendo.config.Config;
 import decrescendo.db.DBManager;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Main {
 
@@ -19,6 +19,10 @@ public class Main {
 		long start = System.currentTimeMillis();
 		Config.setConfig();
 		DBManager.dbSetup();
+
+		PrintStream ps = new PrintStream(new FileOutputStream(new java.io.File(Config.logPath)));
+		System.setOut(ps);
+		System.setErr(ps);
 
 		HashSet<File> files = new FileCloneDetector().execute(Config.targetPath);
 		System.out.println(getMemoryInfo());
@@ -38,17 +42,16 @@ public class Main {
 		System.out.println((new StringBuilder("Execution Time :")).append(time).append(" s").toString());
 	}
 
-	public static String getMemoryInfo() {
-		DecimalFormat f1 = new DecimalFormat("#,###MB");
+	private static String getMemoryInfo() {
+		DecimalFormat f1 = new DecimalFormat("#,###GB");
 		DecimalFormat f2 = new DecimalFormat("##.#");
 		long free = Runtime.getRuntime().freeMemory() / 1024 / 1024;
 		long total = Runtime.getRuntime().totalMemory() / 1024 / 1024;
 		long max = Runtime.getRuntime().maxMemory() / 1024 / 1024;
 		long used = total - free;
 		double ratio = (used * 100 / (double) total);
-		String info = "Java Memory Info :\nSum =" + f1.format(total) + "\n"
+		return "Java Memory Info :\nSum =" + f1.format(total) + "\n"
 				+ "Usage=" + f1.format(used) + " (" + f2.format(ratio) + "%)\n"
 				+ "Max Usage=" + f1.format(max) + "\n";
-		return info;
 	}
 }
