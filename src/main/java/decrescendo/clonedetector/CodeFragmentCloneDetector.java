@@ -17,7 +17,6 @@ import decrescendo.codefragmentclone.CodeFragmentClonePair;
 import decrescendo.config.Config;
 import decrescendo.db.DBManager;
 import decrescendo.db.DataAccessObject;
-import decrescendo.granularity.File;
 import decrescendo.granularity.Granularity;
 import decrescendo.granularity.Method;
 import decrescendo.lexer.sentence.SentenceLexer;
@@ -45,18 +44,26 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 
 		System.out.println("Detecting Code Fragment Clone...");
 		start = System.currentTimeMillis();
-		List<CodeFragmentClonePair<T>> cfClonePairList;
-		cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePair<T>>());
+		List<CodeFragmentClonePair<T>> cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePair<T>>());
 
 		int threadsNum = Runtime.getRuntime().availableProcessors();
-		ExecutorService service = Executors.newFixedThreadPool(threadsNum);
+		ExecutorService service;
 
 		List<Future<List<CodeFragmentClonePair<T>>>> futures = new ArrayList<>();
 
-		for (int i = 0; i < list.size(); i++) {
+		for (int i = 0; i < list.size() - 1; i++) {
+			service = Executors.newFixedThreadPool(threadsNum);
 			for (int j = i + 1; j < list.size(); j++) {
 				Future<List<CodeFragmentClonePair<T>>> future = service.submit(new SmithWaterman<>(list.get(i), list.get(j)));
 				futures.add(future);
+			}
+			service.shutdown();
+			while (!service.isTerminated()) {
+				try {
+					service.awaitTermination(100L, TimeUnit.SECONDS);
+				} catch (InterruptedException e) {
+					System.out.println("Interrupted...");
+				}
 			}
 		}
 
@@ -68,15 +75,6 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 				e1.printStackTrace();
 			}
 		});
-
-		service.shutdown();
-		while (!service.isTerminated()) {
-			try {
-				service.awaitTermination(100L, TimeUnit.SECONDS);
-			} catch (InterruptedException e) {
-				System.out.println("Interrupted...");
-			}
-		}
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
@@ -147,6 +145,13 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		int startLine = list.get(0);
 
 		int endIndex = cloneIndexes.get(0);
+		if (cf.getLineNumberPerSentence().size() <= endIndex) {
+			System.out.println(cf.getPath());
+			System.out.println(cf.getName());
+			System.out.println(cf.getStartLine());
+			System.out.println(cf.getLineNumberPerSentence().size());
+			System.out.println(endIndex);
+		}
 		list = cf.getLineNumberPerSentence().get(endIndex);
 		int endLine = list.get(list.size() - 1);
 
@@ -196,17 +201,24 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		List<Integer> cloneIndexes2 = cfClonePair.getCloneIndexes2();
 		List<Integer> gapIndexes2 = cfClonePair.getGapIndexes2();
 
-		if (cf1.isRepresentative() == 1)
+		if (cf1.isRepresentative() == 1 && Config.file)
 			searchCodeFragmentCloneInRepresentativeFile(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
-
-		if (cf1.isRepresentative() == 2)
+		else if (cf1.isRepresentative() == 2 && Config.method)
 			searchCodeFragmentCloneInRepresentativeMethod(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
+		else if (cf1.isRepresentative() == 3 && Config.file && Config.method) {
+			searchCodeFragmentCloneInRepresentativeFile(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
+			searchCodeFragmentCloneInRepresentativeMethod(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
+		}
 
-		if (cf2.isRepresentative() == 1)
+
+		if (cf2.isRepresentative() == 1 && Config.file)
 			searchCodeFragmentCloneInRepresentativeFile(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
-
-		if (cf2.isRepresentative() == 2)
+		else if (cf2.isRepresentative() == 2 && Config.method)
 			searchCodeFragmentCloneInRepresentativeMethod(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
+		else if (cf2.isRepresentative() == 3 && Config.file && Config.method) {
+			searchCodeFragmentCloneInRepresentativeFile(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
+			searchCodeFragmentCloneInRepresentativeMethod(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
+		}
 	}
 
 	private void searchCodeFragmentCloneInRepresentativeFile(
@@ -274,48 +286,27 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 			}
 		}
 
-		if (Config.method) {
-			Method method = new Method();
-			method.setPath(path);
-			method.setName(name);
-			method.setNormalizedHash(null);
-			method.setOriginalHash(null);
-			method.setNormalizedTokens(null);
-			method.setOriginalTokens(null);
-			method.setLineNumberPerToken(null);
-			method.setStartLine(0);
-			method.setEndLine(0);
-			method.setOrder(order);
-			method.setRepresentative(0);
-			method.setNormalizedSentences(normalizedSentences);
-			method.setOriginalSentences(originalSentences);
-			method.setLineNumberPerSentence(lineNumberPerSentenceList);
+		Method method = new Method();
+		method.setPath(path);
+		method.setName(name);
+		method.setNormalizedHash(null);
+		method.setOriginalHash(null);
+		method.setNormalizedTokens(null);
+		method.setOriginalTokens(null);
+		method.setLineNumberPerToken(null);
+		method.setStartLine(0);
+		method.setEndLine(0);
+		method.setOrder(order);
+		method.setRepresentative(0);
+		method.setNormalizedSentences(normalizedSentences);
+		method.setOriginalSentences(originalSentences);
+		method.setLineNumberPerSentence(lineNumberPerSentenceList);
 
-			CodeFragmentClonePair<Method> cfClonePair = new CodeFragmentClonePair<>(
-					method, (Method) cf2, "", cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
+		CodeFragmentClonePair<Method> cfClonePair = new CodeFragmentClonePair<>(
+				method, (Method) cf2, "", cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
 
-			outputCodeFragmentClonePair(cfClonePair, cloneSetId);
-		} else {
-			File file = new File();
-			file.setPath(path);
-			file.setSource("");
-			file.setNormalizedHash(null);
-			file.setOriginalHash(null);
-			file.setNormalizedTokens(null);
-			file.setOriginalTokens(null);
-			file.setLineNumberPerToken(null);
-			file.setStartLine(0);
-			file.setEndLine(0);
-			file.setRepresentative(0);
-			file.setNormalizedSentences(normalizedSentences);
-			file.setOriginalSentences(originalSentences);
-			file.setLineNumberPerSentence(lineNumberPerSentenceList);
-
-			CodeFragmentClonePair<File> cfClonePair = new CodeFragmentClonePair<>(
-					file, (File) cf2, "", cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
-
-			outputCodeFragmentClonePair(cfClonePair, cloneSetId);
-		}
+		outputCodeFragmentClonePair(cfClonePair, cloneSetId);
 	}
 
 }
+

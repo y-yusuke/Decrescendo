@@ -112,9 +112,13 @@ public class MethodCloneDetector {
 				// 0 ... not representative file and method
 				// 1 ... representative file
 				// 2 ... representative method
+				// 3 ... representative file and method
 				Method tmpMethod = methodCloneSet.get(0);
 				methodSet.remove(tmpMethod);
-				tmpMethod.setRepresentative(2);
+				if (tmpMethod.isRepresentative() == 0)
+					tmpMethod.setRepresentative(2);
+				if (tmpMethod.isRepresentative() == 1)
+					tmpMethod.setRepresentative(3);
 				methodSet.add(tmpMethod);
 			}
 		}
