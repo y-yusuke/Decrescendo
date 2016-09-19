@@ -1,9 +1,6 @@
 package decrescendo.lexer.sentence;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import decrescendo.granularity.Granularity;
@@ -61,26 +58,40 @@ public class SentenceLexer {
 					oTmp.append(oToken);
 					lineNumbers.add(lineNumber);
 
+					int count = 0;
+
 					label:
 					while (true) {
 						String nToken2 = normalizedTokens.next();
 						String oToken2 = originalTokens.next();
 						Integer lineNumber2 = lineNumberPerToken.next();
 						switch (nToken2) {
+							case "(":
+								nTmp.append(nToken2);
+								oTmp.append(oToken2);
+								lineNumbers.add(lineNumber2);
+
+								count++;
+								break;
 							case ")":
 								nTmp.append(nToken2);
 								oTmp.append(oToken2);
 								lineNumbers.add(lineNumber2);
 
-								normalizedSentences.add(HashCreator.getHash(nTmp.toString()));
-								originalSentences.add(HashCreator.getHash(oTmp.toString()));
-								lineNumberPerSentence.add(lineNumbers);
+								if (count == 1) {
+									normalizedSentences.add(HashCreator.getHash(nTmp.toString()));
+									originalSentences.add(HashCreator.getHash(oTmp.toString()));
+									lineNumberPerSentence.add(lineNumbers);
 
-								nTmp = new StringBuilder();
-								oTmp = new StringBuilder();
-								lineNumbers = new ArrayList<>();
+									nTmp = new StringBuilder();
+									oTmp = new StringBuilder();
+									lineNumbers = new ArrayList<>();
 
-								break label;
+									break label;
+								} else {
+									count--;
+									break;
+								}
 							default:
 								nTmp.append(nToken2);
 								oTmp.append(oToken2);
@@ -90,7 +101,6 @@ public class SentenceLexer {
 					break;
 
 				case "case":
-				case "default":
 					nTmp.append(nToken);
 					oTmp.append(oToken);
 					lineNumbers.add(lineNumber);
