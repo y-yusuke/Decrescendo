@@ -42,6 +42,7 @@ public class JavaMethodLexer implements MethodLexer {
 	public HashSet<Method> getMethodInfo(String path, String source, int representative) {
 		HashSet<Method> methodSet = new HashSet<>();
 		final ASTParser parser = ASTParser.newParser(AST.JLS8);
+		//	parser.setIgnoreMethodBodies(true);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		parser.setSource(source.toCharArray());
 		final CompilationUnit unit = (CompilationUnit) parser.createAST(new NullProgressMonitor());
@@ -136,7 +137,9 @@ public class JavaMethodLexer implements MethodLexer {
 					methodOrder++;
 					return super.visit(node);
 				} catch (InvalidInputException e) {
+					System.err.println("Cannot parse this file: " + path);
 					e.printStackTrace();
+					System.err.println();
 					return false;
 				}
 			}

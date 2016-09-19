@@ -3,6 +3,8 @@ package decrescendo.lexer.file;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,14 +44,18 @@ public class JavaFileLexer implements FileLexer {
 		try {
 			String source = getJavaFileSourceCode(path);
 			Scanner scanner = new Scanner();
-			if (source == null) throw new AssertionError();
+			if (source == null) {
+				System.err.println("Cannot read this file: " + path.toString());
+				System.err.println();
+				return null;
+			}
 			scanner.setSource(source.toCharArray());
 			scanner.recordLineSeparator = true;
 			scanner.sourceLevel = ClassFileConstants.JDK1_8;
 
 			StringBuilder originalSb = new StringBuilder();
 			StringBuilder normalizedSb = new StringBuilder();
-			
+
 			int endLine;
 			int tokenSize = 0;
 
@@ -114,17 +120,25 @@ public class JavaFileLexer implements FileLexer {
 			} else
 				return null;
 		} catch (InvalidInputException e) {
+			System.err.println("Cannot parse this file: " + path);
 			e.printStackTrace();
+			System.err.println();
 			return null;
 		}
 	}
 
 	private static String getJavaFileSourceCode(Path path) {
-		try {
-			return Files.lines(path).collect(Collectors.joining("\n"));
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
+		Charset[] charsets = new Charset[]{StandardCharsets.ISO_8859_1,
+				StandardCharsets.US_ASCII, StandardCharsets.UTF_16,
+				StandardCharsets.UTF_16BE, StandardCharsets.UTF_16LE,
+				StandardCharsets.UTF_8};
+		for (final Charset c : charsets) {
+			try {
+				return Files.lines(path, c).collect(Collectors.joining("\n"));
+			} catch (final Exception e) {
+				continue;
+			}
 		}
+		return null;
 	}
 }
