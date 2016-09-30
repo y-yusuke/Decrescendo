@@ -71,6 +71,8 @@ public class JavaMethodLexer implements MethodLexer {
 					List<String> originalTokens = new ArrayList<>();
 					List<Integer> lineNumberPerToken = new ArrayList<>();
 
+					int separatedTokenCount = 0;
+
 					label:
 					while (true) {
 						switch (scanner.getNextToken()) {
@@ -84,9 +86,22 @@ public class JavaMethodLexer implements MethodLexer {
 							case TokenNameCOMMENT_JAVADOC:
 								break;
 
+							case TokenNameabstract:
+							case TokenNamefinal:
+							case TokenNamepublic:
+							case TokenNameprivate:
+							case TokenNameprotected:
+							case TokenNamestatic:
+							case TokenNamenative:
+							case TokenNamesynchronized:
+							case TokenNametransient:
+							case TokenNamevolatile:
+								break;
+
 							case TokenNameLBRACE:
 							case TokenNameRBRACE:
 							case TokenNameSEMICOLON:
+								separatedTokenCount++;
 								normalizedTokens.add(scanner.getCurrentTokenString());
 								originalTokens.add(scanner.getCurrentTokenString());
 								lineNumberPerToken
@@ -118,7 +133,7 @@ public class JavaMethodLexer implements MethodLexer {
 						}
 					}
 
-					if (normalizedTokens.size() >= Config.mMinTokens) {
+					if (normalizedTokens.size() - separatedTokenCount >= Config.mMinTokens) {
 						Method method = new Method();
 						method.setPath(path);
 						method.setName(node.getName().toString());

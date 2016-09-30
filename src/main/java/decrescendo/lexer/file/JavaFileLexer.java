@@ -87,6 +87,16 @@ public class JavaFileLexer implements FileLexer {
 					case TokenNameLBRACE:
 					case TokenNameRBRACE:
 					case TokenNameSEMICOLON:
+					case TokenNameabstract:
+					case TokenNamefinal:
+					case TokenNamepublic:
+					case TokenNameprivate:
+					case TokenNameprotected:
+					case TokenNamestatic:
+					case TokenNamenative:
+					case TokenNamesynchronized:
+					case TokenNametransient:
+					case TokenNamevolatile:
 						break;
 
 					case TokenNameIdentifier:
