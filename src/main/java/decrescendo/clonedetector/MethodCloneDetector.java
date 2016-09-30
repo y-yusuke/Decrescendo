@@ -3,6 +3,7 @@ package decrescendo.clonedetector;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -134,44 +135,60 @@ public class MethodCloneDetector {
 
 	private void searchMethodCloneInRepresentativeFile(Method methodClone1, Method methodClone2, int cloneSetId)
 			throws SQLException, IOException {
+		List<Method> otherFile1 = new ArrayList<>();
+		List<Method> otherFile2 = new ArrayList<>();
+
 		DBManager.searchfc1Statement.setString(1, methodClone1.getPath());
 
 		try (ResultSet results = DBManager.searchfc1Statement.executeQuery()) {
-			insertMethodCloneInRepresentativeFile(results, methodClone1.getOrder(), methodClone2, cloneSetId);
+			otherFile1 = getOther(results, methodClone1.getOrder());
+			otherFile1.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, cloneSetId));
 		}
 
 		DBManager.searchfc2Statement.setString(1, methodClone1.getPath());
 
 		try (ResultSet results = DBManager.searchfc2Statement.executeQuery()) {
-			insertMethodCloneInRepresentativeFile(results, methodClone1.getOrder(), methodClone2, cloneSetId);
+			otherFile2 = getOther(results, methodClone1.getOrder());
+			otherFile2.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, cloneSetId));
 		}
+
+		List<Method> finalOtherFile = otherFile2;
+		otherFile1.forEach(e1 -> finalOtherFile.forEach(e2 -> insertMethodCloneInRepresentativeFile(e1, e2, cloneSetId)));
 	}
 
-	private void insertMethodCloneInRepresentativeFile(ResultSet results, int order, Method methodClone, int cloneSetId)
+	private List<Method> getOther(ResultSet results, int order)
 			throws SQLException {
+		List<Method> otherFile1 = new ArrayList<>();
+
 		while (results.next()) {
 			DBManager.searchdmStatement.setString(1, results.getString(1));
 			DBManager.searchdmStatement.setInt(2, order);
 
 			try (ResultSet results2 = DBManager.searchdmStatement.executeQuery()) {
 				while (results2.next()) {
-					Method methodClone2 = new Method();
-					methodClone2.setPath(results2.getString(1));
-					methodClone2.setName(results2.getString(2));
-					methodClone2.setOriginalHash(results2.getString(6));
-					methodClone2.setNormalizedHash(results2.getString(7));
-					methodClone2.setNormalizedTokens(null);
-					methodClone2.setOriginalTokens(null);
-					methodClone2.setLineNumberPerToken(null);
-					methodClone2.setStartLine(results2.getInt(4));
-					methodClone2.setEndLine(results2.getInt(5));
-					methodClone2.setOrder(results2.getInt(3));
-					methodClone2.setRepresentative(0);
-					DataAccessObject.insertMethodCloneInfo(methodClone, methodClone2, clonePairId, cloneSetId);
-					clonePairId++;
+					Method method = new Method();
+					method.setPath(results2.getString(1));
+					method.setName(results2.getString(2));
+					method.setOriginalHash(results2.getString(6));
+					method.setNormalizedHash(results2.getString(7));
+					method.setNormalizedTokens(null);
+					method.setOriginalTokens(null);
+					method.setLineNumberPerToken(null);
+					method.setStartLine(results2.getInt(4));
+					method.setEndLine(results2.getInt(5));
+					method.setOrder(results2.getInt(3));
+					method.setRepresentative(0);
+					otherFile1.add(method);
 				}
 			}
 		}
+		return otherFile1;
+	}
+
+
+	private void insertMethodCloneInRepresentativeFile(Method methodClone1, Method methodClone2, int cloneSetId) {
+		DataAccessObject.insertMethodCloneInfo(methodClone1, methodClone2, clonePairId, cloneSetId);
+		clonePairId++;
 	}
 
 }

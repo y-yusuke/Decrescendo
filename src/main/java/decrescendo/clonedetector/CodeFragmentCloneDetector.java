@@ -38,6 +38,15 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		System.out.println("Identifying Sentence...");
 		start = System.currentTimeMillis();
 		List<T> list = SentenceLexer.addSeparatedSentenceInfo(set);
+
+		list.forEach(e -> {
+			e.setLineNumberPerToken(null);
+			e.setOriginalTokens(null);
+			e.setLineNumberPerToken(null);
+			e.setNormalizedHash(null);
+			e.setOriginalHash(null);
+		});
+
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
 		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
@@ -201,55 +210,74 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		List<Integer> cloneIndexes2 = cfClonePair.getCloneIndexes2();
 		List<Integer> gapIndexes2 = cfClonePair.getGapIndexes2();
 
-		if (cf1.isRepresentative() == 1 && Config.file)
-			searchCodeFragmentCloneInRepresentativeFile(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
-		else if (cf1.isRepresentative() == 2 && Config.method)
-			searchCodeFragmentCloneInRepresentativeMethod(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
-		else if (cf1.isRepresentative() == 3 && Config.file && Config.method) {
-			searchCodeFragmentCloneInRepresentativeFile(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
-			searchCodeFragmentCloneInRepresentativeMethod(cf1, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
-		}
+		List<Method> otherFile1 = new ArrayList<>();
+		List<Method> otherMethod1 = new ArrayList<>();
+		List<Method> otherFile2 = new ArrayList<>();
+		List<Method> otherMethod2 = new ArrayList<>();
 
 
-		if (cf2.isRepresentative() == 1 && Config.file)
-			searchCodeFragmentCloneInRepresentativeFile(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
-		else if (cf2.isRepresentative() == 2 && Config.method)
-			searchCodeFragmentCloneInRepresentativeMethod(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
-		else if (cf2.isRepresentative() == 3 && Config.file && Config.method) {
-			searchCodeFragmentCloneInRepresentativeFile(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
-			searchCodeFragmentCloneInRepresentativeMethod(cf2, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId);
+		if (cf1.isRepresentative() == 1 && Config.file) {
+			otherFile1 = searchCodeFragmentCloneInRepresentativeFile(cf1);
+		} else if (cf1.isRepresentative() == 2 && Config.method) {
+			otherMethod1 = searchCodeFragmentCloneInRepresentativeMethod(cf1);
+		} else if (cf1.isRepresentative() == 3 && Config.file && Config.method) {
+			otherFile1 = searchCodeFragmentCloneInRepresentativeFile(cf1);
+			otherMethod1 = searchCodeFragmentCloneInRepresentativeMethod(cf1);
 		}
+
+		otherFile1.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes1, gapIndexes1, (Method) cf2, cloneIndexes2, gapIndexes2, cloneSetId));
+		otherMethod1.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes1, gapIndexes1, (Method) cf2, cloneIndexes2, gapIndexes2, cloneSetId));
+
+		if (cf2.isRepresentative() == 1 && Config.file) {
+			otherFile2 = searchCodeFragmentCloneInRepresentativeFile(cf2);
+		} else if (cf2.isRepresentative() == 2 && Config.method) {
+			otherMethod2 = searchCodeFragmentCloneInRepresentativeMethod(cf2);
+		} else if (cf2.isRepresentative() == 3 && Config.file && Config.method) {
+			otherFile2 = searchCodeFragmentCloneInRepresentativeFile(cf2);
+			otherMethod2 = searchCodeFragmentCloneInRepresentativeMethod(cf2);
+		}
+
+		otherFile2.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes2, gapIndexes2, (Method) cf1, cloneIndexes1, gapIndexes1, cloneSetId));
+		otherMethod2.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes2, gapIndexes2, (Method) cf1, cloneIndexes1, gapIndexes1, cloneSetId));
+
+		List<Method> finalOtherFile = otherFile2;
+		List<Method> finalOtherMethod = otherMethod2;
+		otherFile1.forEach(e1 -> {
+			finalOtherFile.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+			finalOtherMethod.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+		});
+		otherMethod1.forEach(e1 -> {
+			finalOtherFile.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+			finalOtherMethod.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+		});
 	}
 
-	private void searchCodeFragmentCloneInRepresentativeFile(
-			T cf1, List<Integer> cloneIndexes1, List<Integer> gapIndexes1,
-			T cf2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2, int cloneSetId) throws SQLException {
+	private List<Method> searchCodeFragmentCloneInRepresentativeFile(T cf1) throws SQLException {
 		DBManager.searchfc1Statement.setString(1, cf1.getPath());
+		List<Method> others = new ArrayList<>();
 		try (ResultSet results = DBManager.searchfc1Statement.executeQuery()) {
 			while (results.next()) {
-				insertCodeFragmentCloneInRepresentative(results.getString(1), cf1.getOrder(), cf1.getName(),
-						cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
+				others.add(getOther(results.getString(1), cf1.getOrder(), cf1.getName()));
 			}
 		}
 
 		DBManager.searchfc2Statement.setString(1, cf1.getPath());
 		try (ResultSet results = DBManager.searchfc2Statement.executeQuery()) {
 			while (results.next()) {
-				insertCodeFragmentCloneInRepresentative(results.getString(1), cf1.getOrder(), cf1.getName(),
-						cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
+				others.add(getOther(results.getString(1), cf1.getOrder(), cf1.getName()));
 			}
 		}
+
+		return others;
 	}
 
-	private void searchCodeFragmentCloneInRepresentativeMethod(
-			T cf1, List<Integer> cloneIndexes1, List<Integer> gapIndexes1,
-			T cf2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2, int cloneSetId) throws SQLException {
+	private List<Method> searchCodeFragmentCloneInRepresentativeMethod(T cf1) throws SQLException {
 		DBManager.searchmc1Statement.setString(1, cf1.getPath());
 		DBManager.searchmc1Statement.setInt(2, cf1.getOrder());
+		List<Method> others = new ArrayList<>();
 		try (ResultSet results = DBManager.searchmc1Statement.executeQuery()) {
 			while (results.next()) {
-				insertCodeFragmentCloneInRepresentative(results.getString(1), results.getInt(2), results.getString(3),
-						cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
+				others.add(getOther(results.getString(1), results.getInt(2), results.getString(3)));
 			}
 		}
 
@@ -257,15 +285,14 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		DBManager.searchmc2Statement.setInt(2, cf1.getOrder());
 		try (ResultSet results = DBManager.searchmc2Statement.executeQuery()) {
 			while (results.next()) {
-				insertCodeFragmentCloneInRepresentative(results.getString(1), results.getInt(2), results.getString(3),
-						cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId);
+				others.add(getOther(results.getString(1), results.getInt(2), results.getString(3)));
 			}
 		}
+
+		return others;
 	}
 
-	private void insertCodeFragmentCloneInRepresentative(
-			String path, int order, String name, List<Integer> cloneIndexes1, List<Integer> gapIndexes1,
-			T cf2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2, int cloneSetId) throws SQLException {
+	private Method getOther(String path, int order, String name) throws SQLException {
 		List<byte[]> normalizedSentences = new ArrayList<>();
 		List<byte[]> originalSentences = new ArrayList<>();
 		List<List<Integer>> lineNumberPerSentenceList = new ArrayList<>();
@@ -302,10 +329,22 @@ public class CodeFragmentCloneDetector<T extends Granularity> {
 		method.setOriginalSentences(originalSentences);
 		method.setLineNumberPerSentence(lineNumberPerSentenceList);
 
-		CodeFragmentClonePair<Method> cfClonePair = new CodeFragmentClonePair<>(
-				method, (Method) cf2, "", cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
+		return method;
+	}
 
-		outputCodeFragmentClonePair(cfClonePair, cloneSetId);
+	private void insertCodeFragmentCloneInRepresentative(
+			Method cf1, List<Integer> cloneIndexes1, List<Integer> gapIndexes1,
+			Method cf2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2,
+			int cloneSetId) {
+
+		CodeFragmentClonePair<Method> cfClonePair = new CodeFragmentClonePair<>(
+				cf1, cf2, null, cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
+
+		try {
+			outputCodeFragmentClonePair(cfClonePair, cloneSetId);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
