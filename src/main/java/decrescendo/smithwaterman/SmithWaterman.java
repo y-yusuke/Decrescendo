@@ -7,15 +7,14 @@ import java.util.concurrent.Callable;
 import decrescendo.codefragmentclone.CodeFragmentClonePair;
 import decrescendo.config.Config;
 import decrescendo.granularity.Granularity;
-import decrescendo.hash.HashCreator;
+import decrescendo.hash.HashList;
 
 public class SmithWaterman<T extends Granularity> implements Callable<List<CodeFragmentClonePair<T>>> {
 	private T target1;
 	private T target2;
 	private List<byte[]> one;
 	private List<byte[]> two;
-	private int[][] matrix;
-	private int traceBack[][];
+	private Cell[][] matrix;
 	final private int match = 2;
 	final private int mismatch = -2;
 	final private int gap = -1;
@@ -49,12 +48,10 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 	}
 
 	private void initialMatrix() {
-		matrix = new int[one.size()][two.size()];
-		traceBack = new int[one.size()][two.size()];
+		matrix = new Cell[one.size()][two.size()];
 		for (int i = 0; i < one.size(); i++) {
 			for (int j = 0; j < two.size(); j++) {
-				matrix[i][j] = 0;
-				traceBack[i][j] = 0;
+				matrix[i][j] = new Cell(0, false);
 			}
 		}
 	}
@@ -63,11 +60,12 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		for (int i = 1; i < one.size(); i++) {
 			for (int j = 1; j < two.size(); j++) {
 				if (java.util.Arrays.equals(one.get(i), two.get(j))) {
-					matrix[i][j] = Math.max(0, Math.max(matrix[i - 1][j - 1] + match,
-							Math.max(matrix[i - 1][j] + gap, matrix[i][j - 1] + gap)));
+					matrix[i][j].value = Math.max(0, Math.max(matrix[i - 1][j - 1].value + match,
+							Math.max(matrix[i - 1][j].value + gap, matrix[i][j - 1].value + gap)));
+					matrix[i][j].match = true;
 				} else {
-					matrix[i][j] = Math.max(0, Math.max(matrix[i - 1][j - 1] + mismatch,
-							Math.max(matrix[i - 1][j] + gap, matrix[i][j - 1] + gap)));
+					matrix[i][j].value = Math.max(0, Math.max(matrix[i - 1][j - 1].value + mismatch,
+							Math.max(matrix[i - 1][j].value + gap, matrix[i][j - 1].value + gap)));
 				}
 			}
 		}
@@ -77,20 +75,27 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		List<CodeFragmentClonePair<T>> cfClonePairList = new ArrayList<>();
 		for (int i = one.size() - 1; i > 0; i--) {
 			for (int j = two.size() - 1; j > 0; j--) {
-				if (matrix[i][j] != 0 && traceBack[i][j] == 0 && java.util.Arrays.equals(one.get(i), two.get(j))) {
+				if (!matrix[i][j].isChecked() && matrix[i][j].isMatch()) { //FIXME//FIX
 					CodeFragmentClonePair<T> cfClonePair = startTraceBack(i, j);
 					if (cfClonePair != null)
 						cfClonePairList.add(cfClonePair);
 				}
 			}
 		}
+		freeMemory();
 		return cfClonePairList;
+	}
+
+	private void freeMemory() {
+		one = null;
+		two = null;
+		matrix = null;
 	}
 
 	private CodeFragmentClonePair<T> startTraceBack(int i, int j) {
 		int iL = i;
 		int jL = j;
-		StringBuilder commonSb = new StringBuilder();
+		List<byte[]> commonHashList = new ArrayList<>();
 		List<Integer> cloneIndexes1 = new ArrayList<>();
 		List<Integer> cloneIndexes2 = new ArrayList<>();
 		List<Integer> gapIndexes1 = new ArrayList<>();
@@ -102,20 +107,20 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		j = localMaxCell[1];
 
 		while (i != 0 && j != 0) {
-			int max = Math.max(matrix[i - 1][j - 1], Math.max(matrix[i - 1][j], matrix[i][j - 1]));
+			int max = Math.max(matrix[i - 1][j - 1].value, Math.max(matrix[i - 1][j].value, matrix[i][j - 1].value));
 			// break
 			if (max == 0) {
-				commonSb.append(HashCreator.convertString(one.get(i)));
+				commonHashList.add(one.get(i));
 				cloneIndexes1.add(i);
 				cloneIndexes2.add(j);
 				break;
 			}
 			// diag case
-			else if (max == matrix[i - 1][j - 1]) {
+			else if (max == matrix[i - 1][j - 1].value) { //FIXME
 				cloneIndexes1.add(i);
 				cloneIndexes2.add(j);
-				if (java.util.Arrays.equals(one.get(i), two.get(j))) {
-					commonSb.append(HashCreator.convertString(one.get(i)));
+				if (matrix[i][j].isMatch()) {
+					commonHashList.add(one.get(i));
 				} else {
 					gapIndexes1.add(i);
 					gapTokenSize1 += target1.getLineNumberPerSentence().get(i).size();
@@ -126,7 +131,7 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 				j = j - 1;
 			}
 			// left case
-			else if (max == matrix[i - 1][j]) {
+			else if (max == matrix[i - 1][j].value) {
 				cloneIndexes1.add(i);
 				gapIndexes1.add(i);
 				gapTokenSize1 += target1.getLineNumberPerSentence().get(i).size();
@@ -142,10 +147,10 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		}
 		for (int p = i; p <= iL; p++)
 			for (int q = j; q <= jL; q++)
-				traceBack[p][q] = 1;
+				matrix[p][q].switchToChecked();
 		if (checkClone(cloneIndexes1, cloneIndexes2, gapTokenSize1, gapTokenSize2))
-			return new CodeFragmentClonePair<>(target1, target2,
-					HashCreator.convertString(HashCreator.getHash(commonSb.toString())), cloneIndexes1, cloneIndexes2,
+			return new CodeFragmentClonePair<>(target1, target2, // FIXME//FIX
+					new HashList(commonHashList), cloneIndexes1, cloneIndexes2,
 					gapIndexes1, gapIndexes2);
 		else
 			return null;
@@ -155,15 +160,15 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		int localMaxCell[] = new int[2];
 		while (i != 0 && j != 0) {
 			int max = Math.max(0,
-					Math.max(matrix[i - 1][j - 1], Math.max(matrix[i - 1][j], matrix[i][j - 1])));
-			if (max < matrix[i][j]) {
+					Math.max(matrix[i - 1][j - 1].value, Math.max(matrix[i - 1][j].value, matrix[i][j - 1].value)));
+			if (max < matrix[i][j].value) {
 				localMaxCell[0] = i;
 				localMaxCell[1] = j;
 				break;
-			} else if (max == matrix[i - 1][j - 1]) {
+			} else if (max == matrix[i - 1][j - 1].value) {
 				i = i - 1;
 				j = j - 1;
-			} else if (max == matrix[i - 1][j]) {
+			} else if (max == matrix[i - 1][j].value) {
 				i = i - 1;
 			} else {
 				j = j - 1;
@@ -194,10 +199,35 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 	private void printMatrix() {
 		for (int i = 0; i < one.size(); i++) {
 			for (int j = 0; j < two.size(); j++) {
-				System.out.print(String.format("%5d", matrix[i][j]) + " ");
+				System.out.print(String.format("%5d", matrix[i][j].value) + " ");
 			}
 			System.out.println();
 		}
+	}
+}
+
+class Cell {
+
+	int value;
+	boolean match;
+	private boolean checked;
+
+	Cell(final int value, final boolean match) {
+		this.value = value;
+		this.match = match;
+		this.checked = false;
+	}
+
+	void switchToChecked() {
+		this.checked = true;
+	}
+
+	boolean isMatch() {
+		return this.match;
+	}
+
+	boolean isChecked() {
+		return this.checked;
 	}
 }
 

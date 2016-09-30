@@ -16,30 +16,38 @@ import decrescendo.granularity.Method;
 public class Main {
 
 	public static void main(String[] args) throws Exception {
-		long start = System.currentTimeMillis();
-		Config.setConfig();
-		DBManager.dbSetup();
+		try {
+			long start = System.currentTimeMillis();
+			Config.setConfig();
+			DBManager.dbSetup();
 
-		PrintStream ps = new PrintStream(new FileOutputStream(new java.io.File(Config.logPath)));
-		System.setOut(ps);
-		System.setErr(ps);
+			PrintStream ps = new PrintStream(new FileOutputStream(new java.io.File(Config.logPath)));
+			System.setOut(ps);
+			System.setErr(ps);
 
-		HashSet<File> files = new FileCloneDetector().execute(Config.targetPath);
-		System.out.println(getMemoryInfo());
-
-		HashSet<Method> methods = new MethodCloneDetector().execute(files);
-		files.clear();
-		System.out.println(getMemoryInfo());
-
-		if (Config.codeFragment) {
-			new CodeFragmentCloneDetector<Method>().execute(methods);
+			HashSet<File> files = new FileCloneDetector().execute(Config.targetPath);
 			System.out.println(getMemoryInfo());
-		}
 
-		DBManager.closeDB();
-		long stop = System.currentTimeMillis();
-		double time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time :")).append(time).append(" s").toString());
+			HashSet<Method> methods = new HashSet<>();
+			if (Config.method || Config.codeFragment) {
+				methods = new MethodCloneDetector().execute(files);
+				files.clear();
+				System.out.println(getMemoryInfo());
+			}
+
+			if (Config.codeFragment) {
+				new CodeFragmentCloneDetector<Method>().execute(methods);
+				System.out.println(getMemoryInfo());
+			}
+
+			DBManager.closeDB();
+			long stop = System.currentTimeMillis();
+			double time = (double) (stop - start) / 1000D;
+			System.out.println((new StringBuilder("Execution Time :")).append(time).append(" s").toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			DBManager.closeDB();
+		}
 	}
 
 	private static String getMemoryInfo() {
