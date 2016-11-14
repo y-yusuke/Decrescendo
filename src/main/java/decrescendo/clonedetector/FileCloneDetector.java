@@ -1,13 +1,9 @@
 package decrescendo.clonedetector;
 
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import decrescendo.config.Config;
 import decrescendo.db.DBManager;
 import decrescendo.db.DataAccessObject;
+import decrescendo.granularity.CodeFragment;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
 import decrescendo.lexer.file.FileLexer;
@@ -15,6 +11,11 @@ import decrescendo.lexer.file.JavaFileLexer;
 import decrescendo.lexer.method.JavaMethodLexer;
 import decrescendo.lexer.method.MethodLexer;
 import decrescendo.lexer.sentence.SentenceLexer;
+
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class FileCloneDetector {
 	private int clonePairId;
@@ -26,12 +27,15 @@ public class FileCloneDetector {
 		long start, stop;
 		double time;
 
-		FileLexer fileLexer = null;
-		if (Config.language.equals("java"))
-			fileLexer = new JavaFileLexer();
+		FileLexer fileLexer;
+		switch (Config.language) {
+			case "java":
+				fileLexer = new JavaFileLexer();
+				break;
 
-		if (fileLexer == null)
-			throw new AssertionError();
+			default:
+				throw new AssertionError();
+		}
 
 		System.out.println("Parsing File...");
 		start = System.currentTimeMillis();
@@ -82,16 +86,16 @@ public class FileCloneDetector {
 				for (int j = i + 1; j < fileCloneSet.size(); j++) {
 					File fileClone2 = fileCloneSet.get(j);
 
-					DataAccessObject.insertFileCloneInfo(fileClone1, fileClone2, clonePairId, cloneSetId);
+					DataAccessObject.insertFileClonePairInfo(fileClone1, fileClone2, clonePairId, cloneSetId);
 
 					if (clonePairId % 1000 == 0)
-						DBManager.fcStatement.executeBatch();
+						DBManager.insertFileCloneInfo.executeBatch();
 
 					clonePairId++;
 
 					if (i == 0) {
 						if (Config.method || Config.codeFragment) {
-							insertDeleteFileInfo(fileClone2);
+							insertDeletedFileInfo(fileClone2);
 							fileSet.remove(fileClone2);
 						}
 					}
@@ -103,35 +107,38 @@ public class FileCloneDetector {
 				// 1 ... representative file
 				File tmpFile = fileCloneSet.get(0);
 				fileSet.remove(tmpFile);
-				tmpFile.setRepresentative(1);
+				tmpFile.representative = 1;
 				fileSet.add(tmpFile);
 			}
 		}
 
-		DBManager.fcStatement.executeBatch();
+		DBManager.insertFileCloneInfo.executeBatch();
 
 		return fileSet;
 	}
 
-	private void insertDeleteFileInfo(File file) throws SQLException {
-		MethodLexer methodLexer = null;
-		if (Config.language.equals("java"))
-			methodLexer = new JavaMethodLexer();
+	private void insertDeletedFileInfo(File e) throws SQLException {
+		MethodLexer methodLexer;
+		switch (Config.language) {
+			case "java":
+				methodLexer = new JavaMethodLexer();
+				break;
 
-		if (methodLexer == null)
-			throw new AssertionError();
+			default:
+				throw new AssertionError();
+		}
 
-		HashSet<Method> methodSet = methodLexer.getMethodInfo(file.getPath(), file.getSource(), 0);
+		HashSet<Method> methodSet = methodLexer.getMethodInfo(e.path, e.source, 0);
 
 		if (methodSet != null) {
-			methodSet.forEach(DataAccessObject::insertDeleteMethodInfo);
-			DBManager.mStatement.executeBatch();
+			methodSet.forEach(DataAccessObject::insertDeletedMethodInfo);
+			DBManager.insertDeletedMethodInfo.executeBatch();
 		}
 
 		if (methodSet != null && Config.codeFragment) {
-			List<Method> separatedMethodList = SentenceLexer.addSeparatedSentenceInfo(methodSet);
-			separatedMethodList.forEach(DataAccessObject::insertDeleteSentenceInfo);
-			DBManager.sStatement.executeBatch();
+			List<CodeFragment> codeFragmentList = SentenceLexer.getCodeFragmentList(methodSet);
+			codeFragmentList.forEach(DataAccessObject::insertDeletedSentenceInfo);
+			DBManager.insertDeletedSentenceInfo.executeBatch();
 		}
 	}
 }

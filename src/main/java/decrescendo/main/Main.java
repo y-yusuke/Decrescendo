@@ -1,10 +1,5 @@
 package decrescendo.main;
 
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.text.DecimalFormat;
-import java.util.HashSet;
-
 import decrescendo.clonedetector.CodeFragmentCloneDetector;
 import decrescendo.clonedetector.FileCloneDetector;
 import decrescendo.clonedetector.MethodCloneDetector;
@@ -12,6 +7,11 @@ import decrescendo.config.Config;
 import decrescendo.db.DBManager;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
+
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.text.DecimalFormat;
+import java.util.HashSet;
 
 public class Main {
 
@@ -36,7 +36,7 @@ public class Main {
 			}
 
 			if (Config.codeFragment) {
-				new CodeFragmentCloneDetector<Method>().execute(methods);
+				new CodeFragmentCloneDetector().execute(methods);
 				System.out.println(getMemoryInfo());
 			}
 

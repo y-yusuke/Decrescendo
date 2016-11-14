@@ -1,19 +1,14 @@
 package decrescendo.granularity;
 
+import decrescendo.hash.Hash;
+
 public class File extends Granularity {
-	private String source;
+	public final String source;
 
-	public File() {
-		super();
-		setOrder(0);
-		setName("");
-	}
-
-	public String getSource() {
-		return source;
-	}
-
-	public void setSource(String source) {
+	public File(String path, int startLine, int endLine,
+				Hash normalizedHash, Hash originalHash,
+				String source) {
+		super(path, normalizedHash, originalHash, startLine, endLine);
 		this.source = source;
 	}
 }

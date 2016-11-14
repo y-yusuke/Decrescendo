@@ -18,7 +18,7 @@ public class HashCreator {
 		}
 	}
 
-	public static String convertString(byte[] digest) {
+/*	public static String convertString(byte[] digest) {
 		StringBuilder buffer = new StringBuilder();
 		for (byte aDigest : digest) {
 			String tmp = Integer.toHexString(aDigest & 0xff);
@@ -28,6 +28,6 @@ public class HashCreator {
 				buffer.append(tmp);
 		}
 		return buffer.toString();
-	}
+	}*/
 
 }

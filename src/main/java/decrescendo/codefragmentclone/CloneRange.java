@@ -1,11 +1,10 @@
 package decrescendo.codefragmentclone;
 
 public class CloneRange {
-
-	private int startLine;
-	private int endLine;
-	private String gapLines;
-	private int gapLineSize;
+	public final int startLine;
+	public final int endLine;
+	public final String gapLines;
+	public final int gapLineSize;
 
 	public CloneRange(int startLine, int endLine, String gapLines, int gapLineSize) {
 		this.startLine = startLine;
@@ -13,21 +12,4 @@ public class CloneRange {
 		this.gapLines = gapLines;
 		this.gapLineSize = gapLineSize;
 	}
-
-	public int getStartLine() {
-		return startLine;
-	}
-
-	public int getEndLine() {
-		return endLine;
-	}
-
-	public String getGapLines() {
-		return gapLines;
-	}
-
-	public int getGapLineSize() {
-		return gapLineSize;
-	}
-
 }

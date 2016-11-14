@@ -1,46 +1,47 @@
 package decrescendo.smithwaterman;
 
+import decrescendo.codefragmentclone.CodeFragmentClonePair;
+import decrescendo.config.Config;
+import decrescendo.granularity.CodeFragment;
+import decrescendo.hash.Hash;
+import decrescendo.hash.HashList;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import decrescendo.codefragmentclone.CodeFragmentClonePair;
-import decrescendo.config.Config;
-import decrescendo.granularity.Granularity;
-import decrescendo.hash.HashList;
-
-public class SmithWaterman<T extends Granularity> implements Callable<List<CodeFragmentClonePair<T>>> {
-	private T target1;
-	private T target2;
-	private List<byte[]> one;
-	private List<byte[]> two;
+public class SmithWaterman implements Callable<List<CodeFragmentClonePair>> {
+	private CodeFragment target1;
+	private CodeFragment target2;
+	private List<Hash> one;
+	private List<Hash> two;
 	private Cell[][] matrix;
-	final private int match = 2;
-	final private int mismatch = -2;
-	final private int gap = -1;
+	private final int match = 2;
+	private final int mismatch = -2;
+	private final int gap = -1;
 
-	public SmithWaterman(T target1, T target2) {
-		int compare = target1.getPath().compareTo(target2.getPath());
+	public SmithWaterman(CodeFragment target1, CodeFragment target2) {
+		int compare = target1.path.compareTo(target2.path);
 
 		if (compare > 0) {
 			this.target1 = target1;
 			this.target2 = target2;
-			this.one = target1.getNormalizedSentences();
-			this.two = target2.getNormalizedSentences();
-		} else if (compare == 0 && target1.getOrder() > target2.getOrder()) {
+			this.one = target1.normalizedSentences;
+			this.two = target2.normalizedSentences;
+		} else if (compare == 0 && target1.order > target2.order) {
 			this.target1 = target1;
 			this.target2 = target2;
-			this.one = target1.getNormalizedSentences();
-			this.two = target2.getNormalizedSentences();
+			this.one = target1.normalizedSentences;
+			this.two = target2.normalizedSentences;
 		} else {
 			this.target1 = target2;
 			this.target2 = target1;
-			this.one = target2.getNormalizedSentences();
-			this.two = target1.getNormalizedSentences();
+			this.one = target2.normalizedSentences;
+			this.two = target1.normalizedSentences;
 		}
 	}
 
-	public List<CodeFragmentClonePair<T>> call() {
+	public List<CodeFragmentClonePair> call() {
 		initialMatrix();
 		calculateScore();
 		//printMatrix();
@@ -59,7 +60,7 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 	private void calculateScore() {
 		for (int i = 1; i < one.size(); i++) {
 			for (int j = 1; j < two.size(); j++) {
-				if (java.util.Arrays.equals(one.get(i), two.get(j))) {
+				if (one.get(i).equals(two.get(j))) {
 					matrix[i][j].value = Math.max(0, Math.max(matrix[i - 1][j - 1].value + match,
 							Math.max(matrix[i - 1][j].value + gap, matrix[i][j - 1].value + gap)));
 					matrix[i][j].match = true;
@@ -71,12 +72,12 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		}
 	}
 
-	private List<CodeFragmentClonePair<T>> traceBack() {
-		List<CodeFragmentClonePair<T>> cfClonePairList = new ArrayList<>();
+	private List<CodeFragmentClonePair> traceBack() {
+		List<CodeFragmentClonePair> cfClonePairList = new ArrayList<>();
 		for (int i = one.size() - 1; i > 0; i--) {
 			for (int j = two.size() - 1; j > 0; j--) {
 				if (!matrix[i][j].isChecked() && matrix[i][j].isMatch()) { //FIXME//FIX
-					CodeFragmentClonePair<T> cfClonePair = startTraceBack(i, j);
+					CodeFragmentClonePair cfClonePair = startTraceBack(i, j);
 					if (cfClonePair != null)
 						cfClonePairList.add(cfClonePair);
 				}
@@ -92,10 +93,10 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		matrix = null;
 	}
 
-	private CodeFragmentClonePair<T> startTraceBack(int i, int j) {
+	private CodeFragmentClonePair startTraceBack(int i, int j) {
 		int iL = i;
 		int jL = j;
-		List<byte[]> commonHashList = new ArrayList<>();
+		List<Hash> commonHashList = new ArrayList<>();
 		List<Integer> cloneIndexes1 = new ArrayList<>();
 		List<Integer> cloneIndexes2 = new ArrayList<>();
 		List<Integer> gapIndexes1 = new ArrayList<>();
@@ -123,9 +124,9 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 					commonHashList.add(one.get(i));
 				} else {
 					gapIndexes1.add(i);
-					gapTokenSize1 += target1.getLineNumberPerSentence().get(i).size();
+					gapTokenSize1 += target1.lineNumberPerSentence.get(i).size();
 					gapIndexes2.add(j);
-					gapTokenSize2 += target2.getLineNumberPerSentence().get(j).size();
+					gapTokenSize2 += target2.lineNumberPerSentence.get(j).size();
 				}
 				i = i - 1;
 				j = j - 1;
@@ -134,14 +135,14 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 			else if (max == matrix[i - 1][j].value) {
 				cloneIndexes1.add(i);
 				gapIndexes1.add(i);
-				gapTokenSize1 += target1.getLineNumberPerSentence().get(i).size();
+				gapTokenSize1 += target1.lineNumberPerSentence.get(i).size();
 				i = i - 1;
 			}
 			// up case
 			else {
 				cloneIndexes2.add(j);
 				gapIndexes2.add(j);
-				gapTokenSize2 += target2.getLineNumberPerSentence().get(j).size();
+				gapTokenSize2 += target2.lineNumberPerSentence.get(j).size();
 				j = j - 1;
 			}
 		}
@@ -149,7 +150,7 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 			for (int q = j; q <= jL; q++)
 				matrix[p][q].switchToChecked();
 		if (checkClone(cloneIndexes1, cloneIndexes2, gapTokenSize1, gapTokenSize2))
-			return new CodeFragmentClonePair<>(target1, target2, // FIXME//FIX
+			return new CodeFragmentClonePair(target1, target2, // FIXME//FIX
 					new HashList(commonHashList), cloneIndexes1, cloneIndexes2,
 					gapIndexes1, gapIndexes2);
 		else
@@ -189,10 +190,10 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 		return true;
 	}
 
-	private int getTokenSize(T clone, List<Integer> cloneIndexes) {
+	private int getTokenSize(CodeFragment cf, List<Integer> cloneIndexes) {
 		int tokenSize = 0;
 		for (int i : cloneIndexes)
-			tokenSize += clone.getLineNumberPerSentence().get(i).size();
+			tokenSize += cf.lineNumberPerSentence.get(i).size();
 		return tokenSize;
 	}
 
@@ -207,7 +208,6 @@ public class SmithWaterman<T extends Granularity> implements Callable<List<CodeF
 }
 
 class Cell {
-
 	int value;
 	boolean match;
 	private boolean checked;

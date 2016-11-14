@@ -1,25 +1,22 @@
 package decrescendo.lexer.file;
 
-import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
+import decrescendo.config.Config;
+import decrescendo.granularity.File;
+import decrescendo.hash.Hash;
+import decrescendo.hash.HashCreator;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
+import org.eclipse.jdt.internal.compiler.parser.Scanner;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.stream.Collectors;
 
-import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
-import org.eclipse.jdt.internal.compiler.parser.Scanner;
-
-import decrescendo.config.Config;
-import decrescendo.granularity.File;
-import decrescendo.hash.HashCreator;
+import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class JavaFileLexer implements FileLexer {
 
@@ -118,17 +115,15 @@ public class JavaFileLexer implements FileLexer {
 			}
 
 			if (tokenSize >= Config.fMinTokens) {
-				File file = new File();
-				file.setPath(path.toString());
-				file.setSource(source);
-				file.setNormalizedHash(HashCreator.convertString(HashCreator.getHash(normalizedSb.toString())));
-				file.setOriginalHash(HashCreator.convertString(HashCreator.getHash(originalSb.toString())));
-				file.setStartLine(1);
-				file.setEndLine(endLine);
-				file.setRepresentative(0);
+				File file = new File(path.toString(), 1, endLine,
+						new Hash(HashCreator.getHash(normalizedSb.toString())),
+						new Hash(HashCreator.getHash(originalSb.toString())),
+						source);
 				return file;
-			} else
+			} else {
 				return null;
+			}
+
 		} catch (InvalidInputException e) {
 			System.err.println("Cannot parse this file: " + path);
 			e.printStackTrace();

@@ -1,14 +1,15 @@
 package decrescendo.hash;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class HashList {
-	private List<byte[]> hashList;
+	public final List<Hash> hashList;
+	public final int hashCode;
 
-	public HashList(List<byte[]> hashList) {
+	public HashList(List<Hash> hashList) {
 		this.hashList = hashList;
+		this.hashCode = Objects.hash(hashList);
 	}
 
 	@Override
@@ -24,7 +25,7 @@ public class HashList {
 			return false;
 		else {
 			for (int i = 0; i < this.hashList.size(); i++) {
-				if (!Arrays.equals(this.hashList.get(i), hashList.hashList.get(i)))
+				if (!this.hashList.get(i).equals(hashList.hashList.get(i)))
 					return false;
 			}
 			return true;
@@ -33,7 +34,7 @@ public class HashList {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(hashList);
+		return hashCode;
 	}
 
 }

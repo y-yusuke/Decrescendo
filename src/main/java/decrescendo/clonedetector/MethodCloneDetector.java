@@ -1,5 +1,16 @@
 package decrescendo.clonedetector;
 
+import decrescendo.config.Config;
+import decrescendo.db.DBManager;
+import decrescendo.db.DataAccessObject;
+import decrescendo.granularity.CodeFragment;
+import decrescendo.granularity.File;
+import decrescendo.granularity.Method;
+import decrescendo.hash.Hash;
+import decrescendo.lexer.method.JavaMethodLexer;
+import decrescendo.lexer.method.MethodLexer;
+import decrescendo.lexer.sentence.SentenceLexer;
+
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -7,15 +18,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import decrescendo.config.Config;
-import decrescendo.db.DBManager;
-import decrescendo.db.DataAccessObject;
-import decrescendo.granularity.File;
-import decrescendo.granularity.Method;
-import decrescendo.lexer.method.JavaMethodLexer;
-import decrescendo.lexer.method.MethodLexer;
-import decrescendo.lexer.sentence.SentenceLexer;
 
 public class MethodCloneDetector {
 	private int clonePairId;
@@ -28,12 +30,15 @@ public class MethodCloneDetector {
 		long start, stop;
 		double time;
 
-		MethodLexer methodLexer = null;
-		if (Config.language.equals("java"))
-			methodLexer = new JavaMethodLexer();
+		MethodLexer methodLexer;
+		switch (Config.language) {
+			case "java":
+				methodLexer = new JavaMethodLexer();
+				break;
 
-		if (methodLexer == null)
-			throw new AssertionError();
+			default:
+				throw new AssertionError();
+		}
 
 		System.out.println("Parsing Method...");
 		start = System.currentTimeMillis();
@@ -85,18 +90,18 @@ public class MethodCloneDetector {
 				for (int q = p + 1; q < methodCloneSet.size(); q++) {
 					Method methodClone2 = methodCloneSet.get(q);
 
-					DataAccessObject.insertMethodCloneInfo(methodClone1, methodClone2, clonePairId, cloneSetId);
+					DataAccessObject.insertMethodClonePairInfo(methodClone1, methodClone2, clonePairId, cloneSetId);
 
 					if (clonePairId % 1000 == 0)
-						DBManager.mcStatement.executeBatch();
+						DBManager.insertMethodCloneInfo.executeBatch();
 
 					clonePairId++;
 
 					if (Config.file) {
-						if (methodClone1.isRepresentative() != 0)
+						if (methodClone1.representative != 0)
 							searchMethodCloneInRepresentativeFile(methodClone1, methodClone2, cloneSetId);
 
-						if (methodClone2.isRepresentative() != 0)
+						if (methodClone2.representative != 0)
 							searchMethodCloneInRepresentativeFile(methodClone2, methodClone1, cloneSetId);
 					}
 
@@ -116,21 +121,21 @@ public class MethodCloneDetector {
 				// 3 ... representative file and method
 				Method tmpMethod = methodCloneSet.get(0);
 				methodSet.remove(tmpMethod);
-				if (tmpMethod.isRepresentative() == 0)
-					tmpMethod.setRepresentative(2);
-				if (tmpMethod.isRepresentative() == 1)
-					tmpMethod.setRepresentative(3);
+				if (tmpMethod.representative == 0)
+					tmpMethod.representative = 2;
+				if (tmpMethod.representative == 1)
+					tmpMethod.representative = 3;
 				methodSet.add(tmpMethod);
 			}
 		}
-		DBManager.mcStatement.executeBatch();
+		DBManager.insertMethodCloneInfo.executeBatch();
 		return methodSet;
 	}
 
 	private void insertDeleteMethodInfo(Method method) throws SQLException {
-		Method separatedMethod = SentenceLexer.separateSentences(method);
-		DataAccessObject.insertDeleteSentenceInfo(separatedMethod);
-		DBManager.sStatement.executeBatch();
+		CodeFragment codeFragment = SentenceLexer.separateSentences(method);
+		DataAccessObject.insertDeletedSentenceInfo(codeFragment);
+		DBManager.insertDeletedSentenceInfo.executeBatch();
 	}
 
 	private void searchMethodCloneInRepresentativeFile(Method methodClone1, Method methodClone2, int cloneSetId)
@@ -138,17 +143,17 @@ public class MethodCloneDetector {
 		List<Method> otherFile1 = new ArrayList<>();
 		List<Method> otherFile2 = new ArrayList<>();
 
-		DBManager.searchfc1Statement.setString(1, methodClone1.getPath());
+		DBManager.selectFileClonePath2.setString(1, methodClone1.path);
 
-		try (ResultSet results = DBManager.searchfc1Statement.executeQuery()) {
-			otherFile1 = getOther(results, methodClone1.getOrder());
+		try (ResultSet results = DBManager.selectFileClonePath2.executeQuery()) {
+			otherFile1 = getOther(results, methodClone1.order);
 			otherFile1.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, cloneSetId));
 		}
 
-		DBManager.searchfc2Statement.setString(1, methodClone1.getPath());
+		DBManager.selectFileClonePath1.setString(1, methodClone1.path);
 
-		try (ResultSet results = DBManager.searchfc2Statement.executeQuery()) {
-			otherFile2 = getOther(results, methodClone1.getOrder());
+		try (ResultSet results = DBManager.selectFileClonePath1.executeQuery()) {
+			otherFile2 = getOther(results, methodClone1.order);
 			otherFile2.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, cloneSetId));
 		}
 
@@ -161,23 +166,15 @@ public class MethodCloneDetector {
 		List<Method> otherFile1 = new ArrayList<>();
 
 		while (results.next()) {
-			DBManager.searchdmStatement.setString(1, results.getString(1));
-			DBManager.searchdmStatement.setInt(2, order);
+			DBManager.selectDeletedMethods.setString(1, results.getString(1));
+			DBManager.selectDeletedMethods.setInt(2, order);
 
-			try (ResultSet results2 = DBManager.searchdmStatement.executeQuery()) {
+			try (ResultSet results2 = DBManager.selectDeletedMethods.executeQuery()) {
 				while (results2.next()) {
-					Method method = new Method();
-					method.setPath(results2.getString(1));
-					method.setName(results2.getString(2));
-					method.setOriginalHash(results2.getString(6));
-					method.setNormalizedHash(results2.getString(7));
-					method.setNormalizedTokens(null);
-					method.setOriginalTokens(null);
-					method.setLineNumberPerToken(null);
-					method.setStartLine(results2.getInt(4));
-					method.setEndLine(results2.getInt(5));
-					method.setOrder(results2.getInt(3));
-					method.setRepresentative(0);
+					Method method = new Method(results2.getString(1), results2.getString(2), results2.getInt(3),
+							results2.getInt(4), results2.getInt(5),
+							new Hash(results2.getBytes(7)), new Hash(results2.getBytes(6)),
+							null, null, null);
 					otherFile1.add(method);
 				}
 			}
@@ -187,7 +184,7 @@ public class MethodCloneDetector {
 
 
 	private void insertMethodCloneInRepresentativeFile(Method methodClone1, Method methodClone2, int cloneSetId) {
-		DataAccessObject.insertMethodCloneInfo(methodClone1, methodClone2, clonePairId, cloneSetId);
+		DataAccessObject.insertMethodClonePairInfo(methodClone1, methodClone2, clonePairId, cloneSetId);
 		clonePairId++;
 	}
 

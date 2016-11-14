@@ -23,14 +23,8 @@ public class Config {
 			prop.load(fr);
 		}
 		targetPath = prop.getProperty("targetPath");
-		if (targetPath == null)
-			throw new RuntimeException();
 		outputPath = prop.getProperty("outputPath");
-		if (outputPath == null)
-			throw new RuntimeException();
 		logPath = prop.getProperty("logPath");
-		if (logPath == null)
-			throw new RuntimeException();
 		language = prop.getProperty("language");
 		file = Boolean.valueOf(prop.getProperty("file"));
 		method = Boolean.valueOf(prop.getProperty("method"));

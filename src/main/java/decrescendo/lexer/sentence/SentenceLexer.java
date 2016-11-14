@@ -1,23 +1,28 @@
 package decrescendo.lexer.sentence;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import decrescendo.granularity.Granularity;
+import decrescendo.granularity.CodeFragment;
+import decrescendo.granularity.Method;
+import decrescendo.hash.Hash;
 import decrescendo.hash.HashCreator;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class SentenceLexer {
 
-	public static <T extends Granularity> List<T> addSeparatedSentenceInfo(HashSet<T> set) {
+	public static List<CodeFragment> getCodeFragmentList(HashSet<Method> set) {
 		return set.stream()
 				.parallel()
 				.map(SentenceLexer::separateSentences)
 				.collect(Collectors.toList());
 	}
 
-	public static <T extends Granularity> T separateSentences(T e) {
-		List<byte[]> normalizedSentences = new ArrayList<>();
-		List<byte[]> originalSentences = new ArrayList<>();
+	public static CodeFragment separateSentences(Method e) {
+		List<Hash> normalizedSentences = new ArrayList<>();
+		List<Hash> originalSentences = new ArrayList<>();
 		List<List<Integer>> lineNumberPerSentence = new ArrayList<>();
 		List<Integer> lineNumbers = new ArrayList<>();
 
@@ -28,9 +33,9 @@ public class SentenceLexer {
 		StringBuilder nTmp = new StringBuilder();
 		StringBuilder oTmp = new StringBuilder();
 
-		Iterator<String> normalizedTokens = e.getNormalizedTokens().iterator();
-		Iterator<String> originalTokens = e.getOriginalTokens().iterator();
-		Iterator<Integer> lineNumberPerToken = e.getLineNumberPerToken().iterator();
+		Iterator<String> normalizedTokens = e.normalizedTokens.iterator();
+		Iterator<String> originalTokens = e.originalTokens.iterator();
+		Iterator<Integer> lineNumberPerToken = e.lineNumberPerToken.iterator();
 
 		while (normalizedTokens.hasNext()) {
 			String nToken = normalizedTokens.next();
@@ -42,8 +47,8 @@ public class SentenceLexer {
 				case "{":
 				case "}":
 					if (!nTmp.toString().equals("")) {
-						normalizedSentences.add(HashCreator.getHash(nTmp.toString()));
-						originalSentences.add(HashCreator.getHash(oTmp.toString()));
+						normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
+						originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
 						lineNumberPerSentence.add(lineNumbers);
 					}
 					nTmp = new StringBuilder();
@@ -79,8 +84,8 @@ public class SentenceLexer {
 								lineNumbers.add(lineNumber2);
 
 								if (count == 1) {
-									normalizedSentences.add(HashCreator.getHash(nTmp.toString()));
-									originalSentences.add(HashCreator.getHash(oTmp.toString()));
+									normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
+									originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
 									lineNumberPerSentence.add(lineNumbers);
 
 									nTmp = new StringBuilder();
@@ -116,8 +121,8 @@ public class SentenceLexer {
 								oTmp.append(oToken2);
 								lineNumbers.add(lineNumber2);
 
-								normalizedSentences.add(HashCreator.getHash(nTmp.toString()));
-								originalSentences.add(HashCreator.getHash(oTmp.toString()));
+								normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
+								originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
 								lineNumberPerSentence.add(lineNumbers);
 
 								nTmp = new StringBuilder();
@@ -139,8 +144,8 @@ public class SentenceLexer {
 					oTmp.append(oToken);
 					lineNumbers.add(lineNumber);
 
-					normalizedSentences.add(HashCreator.getHash(nTmp.toString()));
-					originalSentences.add(HashCreator.getHash(oTmp.toString()));
+					normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
+					originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
 					lineNumberPerSentence.add(lineNumbers);
 
 					nTmp = new StringBuilder();
@@ -157,9 +162,9 @@ public class SentenceLexer {
 
 		}
 
-		e.setNormalizedSentences(normalizedSentences);
-		e.setOriginalSentences(originalSentences);
-		e.setLineNumberPerSentence(lineNumberPerSentence);
-		return e;
+		CodeFragment codeFragment = new CodeFragment(e.path, e.name, e.order, e.startLine, e.endLine, normalizedSentences, originalSentences, lineNumberPerSentence);
+		codeFragment.representative = e.representative;
+
+		return codeFragment;
 	}
 }

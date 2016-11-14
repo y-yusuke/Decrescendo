@@ -1,6 +1,15 @@
 package decrescendo.lexer.method;
 
-import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
+import decrescendo.config.Config;
+import decrescendo.granularity.File;
+import decrescendo.granularity.Method;
+import decrescendo.hash.Hash;
+import decrescendo.hash.HashCreator;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
+import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
+import org.eclipse.jdt.internal.compiler.parser.Scanner;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,20 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
-import org.eclipse.jdt.internal.compiler.parser.Scanner;
-
-import decrescendo.config.Config;
-import decrescendo.granularity.File;
-import decrescendo.granularity.Method;
-import decrescendo.hash.HashCreator;
+import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class JavaMethodLexer implements MethodLexer {
 	public JavaMethodLexer() {
@@ -32,7 +28,7 @@ public class JavaMethodLexer implements MethodLexer {
 	public HashSet<Method> getMethodSet(HashSet<File> files) throws IOException {
 		return files.stream()
 				.parallel()
-				.map(e -> getMethodInfo(e.getPath(), e.getSource(), e.isRepresentative()))
+				.map(e -> getMethodInfo(e.path, e.source, e.representative))
 				.filter(e -> e != null)
 				.flatMap(Collection::stream)
 				.collect(Collectors.toCollection(HashSet::new));
@@ -134,23 +130,16 @@ public class JavaMethodLexer implements MethodLexer {
 					}
 
 					if (normalizedTokens.size() - separatedTokenCount >= Config.mMinTokens) {
-						Method method = new Method();
-						method.setPath(path);
-						method.setName(node.getName().toString());
-						method.setNormalizedHash(HashCreator.convertString(HashCreator.getHash(normalizedSb.toString())));
-						method.setOriginalHash(HashCreator.convertString(HashCreator.getHash(originalSb.toString())));
-						method.setNormalizedTokens(normalizedTokens);
-						method.setOriginalTokens(originalTokens);
-						method.setLineNumberPerToken(lineNumberPerToken);
-						method.setStartLine(startLine);
-						method.setEndLine(endLine);
-						method.setOrder(methodOrder);
-						method.setRepresentative(representative);
-
+						Method method = new Method(path, node.getName().toString(), methodOrder, startLine, endLine,
+								new Hash(HashCreator.getHash(normalizedSb.toString())), new Hash(HashCreator.getHash(originalSb.toString())),
+								normalizedTokens, originalTokens, lineNumberPerToken);
+						method.representative = representative;
 						methodSet.add(method);
 					}
+
 					methodOrder++;
 					return super.visit(node);
+
 				} catch (InvalidInputException e) {
 					System.err.println("Cannot parse this file: " + path);
 					e.printStackTrace();

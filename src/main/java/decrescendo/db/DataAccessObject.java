@@ -1,122 +1,124 @@
 package decrescendo.db;
 
+import decrescendo.codefragmentclone.CloneRange;
+import decrescendo.granularity.CodeFragment;
+import decrescendo.granularity.File;
+import decrescendo.granularity.Method;
+import decrescendo.hash.Hash;
+
 import java.sql.SQLException;
 import java.util.List;
 
-import decrescendo.codefragmentclone.CloneRange;
-import decrescendo.granularity.File;
-import decrescendo.granularity.Granularity;
-import decrescendo.granularity.Method;
-
 public class DataAccessObject {
 
-	public static void insertFileCloneInfo(File fileClone1, File fileClone2, int clonePairId, int cloneSetId) {
+	public static void insertFileClonePairInfo(File fc1, File fc2, int clonePairId, int cloneSetId) {
 		try {
-			DBManager.fcStatement.setInt(1, clonePairId);
-			DBManager.fcStatement.setString(2, fileClone1.getPath());
-			DBManager.fcStatement.setInt(3, fileClone1.getStartLine());
-			DBManager.fcStatement.setInt(4, fileClone1.getEndLine());
-			DBManager.fcStatement.setString(5, fileClone2.getPath());
-			DBManager.fcStatement.setInt(6, fileClone2.getStartLine());
-			DBManager.fcStatement.setInt(7, fileClone2.getEndLine());
-			DBManager.fcStatement.setInt(8, cloneSetId);
+			DBManager.insertFileCloneInfo.setInt(1, clonePairId);
+			DBManager.insertFileCloneInfo.setString(2, fc1.path);
+			DBManager.insertFileCloneInfo.setInt(3, fc1.startLine);
+			DBManager.insertFileCloneInfo.setInt(4, fc1.endLine);
+			DBManager.insertFileCloneInfo.setString(5, fc2.path);
+			DBManager.insertFileCloneInfo.setInt(6, fc2.startLine);
+			DBManager.insertFileCloneInfo.setInt(7, fc2.endLine);
+			DBManager.insertFileCloneInfo.setInt(8, cloneSetId);
 
-			if (fileClone1.getOriginalHash().equals(fileClone2.getOriginalHash()))
-				DBManager.fcStatement.setInt(9, 1);
+			if (fc1.originalHash.equals(fc2.originalHash))
+				DBManager.insertFileCloneInfo.setInt(9, 1);
 			else
-				DBManager.fcStatement.setInt(9, 2);
+				DBManager.insertFileCloneInfo.setInt(9, 2);
 
-			DBManager.fcStatement.addBatch();
+			DBManager.insertFileCloneInfo.addBatch();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 
 	}
 
-	public static void insertMethodCloneInfo(Method methodClone1, Method methodClone2, int clonePairId, int cloneSetId) {
+	public static void insertMethodClonePairInfo(Method mc1, Method mc2, int clonePairId, int cloneSetId) {
 		try {
-			DBManager.mcStatement.setInt(1, clonePairId);
-			DBManager.mcStatement.setString(2, methodClone1.getPath());
-			DBManager.mcStatement.setString(3, methodClone1.getName());
-			DBManager.mcStatement.setInt(4, methodClone1.getOrder());
-			DBManager.mcStatement.setInt(5, methodClone1.getStartLine());
-			DBManager.mcStatement.setInt(6, methodClone1.getEndLine());
-			DBManager.mcStatement.setString(7, methodClone2.getPath());
-			DBManager.mcStatement.setString(8, methodClone2.getName());
-			DBManager.mcStatement.setInt(9, methodClone2.getOrder());
-			DBManager.mcStatement.setInt(10, methodClone2.getStartLine());
-			DBManager.mcStatement.setInt(11, methodClone2.getEndLine());
-			DBManager.mcStatement.setInt(12, cloneSetId);
+			DBManager.insertMethodCloneInfo.setInt(1, clonePairId);
+			DBManager.insertMethodCloneInfo.setString(2, mc1.path);
+			DBManager.insertMethodCloneInfo.setString(3, mc1.name);
+			DBManager.insertMethodCloneInfo.setInt(4, mc1.order);
+			DBManager.insertMethodCloneInfo.setInt(5, mc1.startLine);
+			DBManager.insertMethodCloneInfo.setInt(6, mc1.endLine);
+			DBManager.insertMethodCloneInfo.setString(7, mc2.path);
+			DBManager.insertMethodCloneInfo.setString(8, mc2.name);
+			DBManager.insertMethodCloneInfo.setInt(9, mc2.order);
+			DBManager.insertMethodCloneInfo.setInt(10, mc2.startLine);
+			DBManager.insertMethodCloneInfo.setInt(11, mc2.startLine);
+			DBManager.insertMethodCloneInfo.setInt(12, cloneSetId);
 
-			if (methodClone1.getOriginalHash().equals(methodClone2.getOriginalHash()))
-				DBManager.mcStatement.setInt(13, 1);
+			if (mc1.originalHash.equals(mc2.originalHash))
+				DBManager.insertMethodCloneInfo.setInt(13, 1);
 			else
-				DBManager.mcStatement.setInt(13, 2);
+				DBManager.insertMethodCloneInfo.setInt(13, 2);
 
-			DBManager.mcStatement.addBatch();
+			DBManager.insertMethodCloneInfo.addBatch();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static <T extends Granularity> void insertCodeFragmentCloneInfo(T cf1, CloneRange cloneRange1, T cf2, CloneRange cloneRange2, int type, int clonePairId, int cloneSetId) {
+	public static void insertCodeFragmentClonePairInfo(
+			CodeFragment cf1, CloneRange cloneRange1, CodeFragment cf2, CloneRange cloneRange2, int type, int clonePairId, int cloneSetId) {
 		try {
-			DBManager.cfcStatement.setInt(1, clonePairId);
-			DBManager.cfcStatement.setString(2, cf1.getPath());
-			DBManager.cfcStatement.setString(3, cf1.getName());
-			DBManager.cfcStatement.setInt(4, cf1.getOrder());
-			DBManager.cfcStatement.setInt(5, cloneRange1.getStartLine());
-			DBManager.cfcStatement.setInt(6, cloneRange1.getEndLine());
-			DBManager.cfcStatement.setString(7, cloneRange1.getGapLines());
-			DBManager.cfcStatement.setString(8, cf2.getPath());
-			DBManager.cfcStatement.setString(9, cf2.getName());
-			DBManager.cfcStatement.setInt(10, cf2.getOrder());
-			DBManager.cfcStatement.setInt(11, cloneRange2.getStartLine());
-			DBManager.cfcStatement.setInt(12, cloneRange2.getEndLine());
-			DBManager.cfcStatement.setString(13, cloneRange2.getGapLines());
-			DBManager.cfcStatement.setInt(14, cloneSetId);
-			DBManager.cfcStatement.setInt(15, type);
-			DBManager.cfcStatement.addBatch();
+			DBManager.insertCodeFragmentCloneInfo.setInt(1, clonePairId);
+			DBManager.insertCodeFragmentCloneInfo.setString(2, cf1.path);
+			DBManager.insertCodeFragmentCloneInfo.setString(3, cf1.name);
+			DBManager.insertCodeFragmentCloneInfo.setInt(4, cf1.order);
+			DBManager.insertCodeFragmentCloneInfo.setInt(5, cloneRange1.startLine);
+			DBManager.insertCodeFragmentCloneInfo.setInt(6, cloneRange1.endLine);
+			DBManager.insertCodeFragmentCloneInfo.setString(7, cloneRange1.gapLines);
+			DBManager.insertCodeFragmentCloneInfo.setString(8, cf2.path);
+			DBManager.insertCodeFragmentCloneInfo.setString(9, cf2.name);
+			DBManager.insertCodeFragmentCloneInfo.setInt(10, cf2.order);
+			DBManager.insertCodeFragmentCloneInfo.setInt(11, cloneRange2.startLine);
+			DBManager.insertCodeFragmentCloneInfo.setInt(12, cloneRange2.endLine);
+			DBManager.insertCodeFragmentCloneInfo.setString(13, cloneRange2.gapLines);
+			DBManager.insertCodeFragmentCloneInfo.setInt(14, cloneSetId);
+			DBManager.insertCodeFragmentCloneInfo.setInt(15, type);
+			DBManager.insertCodeFragmentCloneInfo.addBatch();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static void insertDeleteMethodInfo(Method e) {
+	public static void insertDeletedMethodInfo(Method e) {
 		try {
-			DBManager.mStatement.setString(1, e.getPath());
-			DBManager.mStatement.setString(2, e.getName());
-			DBManager.mStatement.setInt(3, e.getOrder());
-			DBManager.mStatement.setInt(4, e.getStartLine());
-			DBManager.mStatement.setInt(5, e.getEndLine());
-			DBManager.mStatement.setString(6, e.getOriginalHash());
-			DBManager.mStatement.setString(7, e.getNormalizedHash());
-			DBManager.mStatement.addBatch();
+			DBManager.insertDeletedMethodInfo.setString(1, e.path);
+			DBManager.insertDeletedMethodInfo.setString(2, e.name);
+			DBManager.insertDeletedMethodInfo.setInt(3, e.order);
+			DBManager.insertDeletedMethodInfo.setInt(4, e.startLine);
+			DBManager.insertDeletedMethodInfo.setInt(5, e.endLine);
+			DBManager.insertDeletedMethodInfo.setBytes(6, e.originalHash.hash);
+			DBManager.insertDeletedMethodInfo.setBytes(7, e.normalizedHash.hash);
+			DBManager.insertDeletedMethodInfo.addBatch();
 		} catch (SQLException e1) {
 			e1.printStackTrace();
 		}
 	}
 
-	public static <T extends Granularity> void insertDeleteSentenceInfo(T e) {
-		List<byte[]> normalizedSentences = e.getNormalizedSentences();
-		List<byte[]> originalSentences = e.getOriginalSentences();
-		List<List<Integer>> lineNumberPerSentenceList = e.getLineNumberPerSentence();
+	public static void insertDeletedSentenceInfo(CodeFragment e) {
+		List<Hash> normalizedSentences = e.normalizedSentences;
+		List<Hash> originalSentences = e.originalSentences;
+		List<List<Integer>> lineNumberPerSentenceList = e.lineNumberPerSentence;
 
 		for (int i = 1; i < normalizedSentences.size(); i++) {
-			byte[] normalizedSentence = normalizedSentences.get(i);
-			byte[] originalSentence = originalSentences.get(i);
+			Hash normalizedSentence = normalizedSentences.get(i);
+			Hash originalSentence = originalSentences.get(i);
 			List<Integer> lineNumbers = lineNumberPerSentenceList.get(i);
 
 			try {
-				DBManager.sStatement.setString(1, e.getPath());
-				DBManager.sStatement.setString(2, e.getName());
-				DBManager.sStatement.setInt(3, e.getOrder());
-				DBManager.sStatement.setInt(4, i);
-				DBManager.sStatement.setInt(5, lineNumbers.get(0));
-				DBManager.sStatement.setInt(6, lineNumbers.get(lineNumbers.size() - 1));
-				DBManager.sStatement.setBytes(7, originalSentence);
-				DBManager.sStatement.setBytes(8, normalizedSentence);
-				DBManager.sStatement.addBatch();
+				DBManager.insertDeletedSentenceInfo.setString(1, e.path);
+				DBManager.insertDeletedSentenceInfo.setString(2, e.name);
+				DBManager.insertDeletedSentenceInfo.setInt(3, e.order);
+				DBManager.insertDeletedSentenceInfo.setInt(4, i);
+				DBManager.insertDeletedSentenceInfo.setInt(5, lineNumbers.get(0));
+				DBManager.insertDeletedSentenceInfo.setInt(6, lineNumbers.get(lineNumbers.size() - 1));
+				DBManager.insertDeletedSentenceInfo.setBytes(7, originalSentence.hash);
+				DBManager.insertDeletedSentenceInfo.setBytes(8, normalizedSentence.hash);
+				DBManager.insertDeletedSentenceInfo.addBatch();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}

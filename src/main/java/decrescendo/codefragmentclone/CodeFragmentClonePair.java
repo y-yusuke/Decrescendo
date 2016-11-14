@@ -1,19 +1,20 @@
 package decrescendo.codefragmentclone;
 
+import decrescendo.granularity.CodeFragment;
 import decrescendo.hash.HashList;
 
 import java.util.List;
 
-public class CodeFragmentClonePair<T> {
-	private T clone1;
-	private T clone2;
-	private HashList commonHash;
-	private List<Integer> cloneIndexes1;
-	private List<Integer> cloneIndexes2;
-	private List<Integer> gapIndexes1;
-	private List<Integer> gapIndexes2;
+public class CodeFragmentClonePair {
+	public final CodeFragment clone1;
+	public final CodeFragment clone2;
+	public final HashList commonHash;
+	public final List<Integer> cloneIndexes1;
+	public final List<Integer> cloneIndexes2;
+	public final List<Integer> gapIndexes1;
+	public final List<Integer> gapIndexes2;
 
-	public CodeFragmentClonePair(T clone1, T clone2, HashList commonHash,
+	public CodeFragmentClonePair(CodeFragment clone1, CodeFragment clone2, HashList commonHash,
 								 List<Integer> cloneIndexes1, List<Integer> cloneIndexes2,
 								 List<Integer> gapIndexes1, List<Integer> gapIndexes2) {
 		this.clone1 = clone1;
@@ -25,32 +26,7 @@ public class CodeFragmentClonePair<T> {
 		this.gapIndexes2 = gapIndexes2;
 	}
 
-	public T getClone1() {
-		return clone1;
-	}
-
-	public T getClone2() {
-		return clone2;
-	}
-
 	public HashList getCommonHash() {
 		return commonHash;
 	}
-
-	public List<Integer> getCloneIndexes1() {
-		return cloneIndexes1;
-	}
-
-	public List<Integer> getCloneIndexes2() {
-		return cloneIndexes2;
-	}
-
-	public List<Integer> getGapIndexes1() {
-		return gapIndexes1;
-	}
-
-	public List<Integer> getGapIndexes2() {
-		return gapIndexes2;
-	}
-
 }

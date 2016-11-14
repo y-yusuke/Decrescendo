@@ -11,17 +11,20 @@ import java.sql.Statement;
 public class DBManager {
 	private static Connection connection;
 	private static Statement statement;
-	public static PreparedStatement mStatement;
-	public static PreparedStatement sStatement;
-	public static PreparedStatement fcStatement;
-	public static PreparedStatement mcStatement;
-	public static PreparedStatement cfcStatement;
-	public static PreparedStatement searchfc1Statement;
-	public static PreparedStatement searchfc2Statement;
-	public static PreparedStatement searchmc1Statement;
-	public static PreparedStatement searchmc2Statement;
-	public static PreparedStatement searchdmStatement;
-	public static PreparedStatement searchdsStatement;
+	public static PreparedStatement insertDeletedMethodInfo;
+	public static PreparedStatement insertDeletedSentenceInfo;
+	public static PreparedStatement insertFileCloneInfo;
+	public static PreparedStatement insertMethodCloneInfo;
+	public static PreparedStatement insertCodeFragmentCloneInfo;
+	public static PreparedStatement selectFileClonePath1;
+	public static PreparedStatement selectFileClonePath2;
+	public static PreparedStatement selectMethodClonePath1;
+	public static PreparedStatement selectMethodClonePath2;
+	public static PreparedStatement selectDeletedMethods;
+	public static PreparedStatement selectDeletedSentences;
+
+	private static Connection tmpconnection;
+	private static Statement tmpstatement;
 
 	public static void dbSetup() throws ClassNotFoundException, SQLException {
 		Class.forName("org.sqlite.JDBC");
@@ -50,8 +53,8 @@ public class DBManager {
 				+ "END_LINE INTEGER, "
 				+ "ORIGINAL_HASH string, "
 				+ "NORMALIZED_HASH string)");
-		statement.executeUpdate("CREATE INDEX mpathIndex ON DELETE_METHODS(PATH)");
-		statement.executeUpdate("CREATE INDEX mnumIndex ON DELETE_METHODS(METHOD_NUMBER)");
+		statement.executeUpdate("CREATE INDEX mPathIndex ON DELETE_METHODS(PATH)");
+		statement.executeUpdate("CREATE INDEX mNumIndex ON DELETE_METHODS(METHOD_NUMBER)");
 
 		statement.executeUpdate("CREATE TABLE DELETE_SENTENCES("
 				+ "PATH string, "
@@ -62,8 +65,8 @@ public class DBManager {
 				+ "END_LINE INTEGER, "
 				+ "ORIGINAL_HASH BLOB, "
 				+ "NORMALIZED_HASH BLOB)");
-		statement.executeUpdate("CREATE INDEX spathIndex ON DELETE_SENTENCES(PATH)");
-		statement.executeUpdate("CREATE INDEX mnum2Index ON DELETE_SENTENCES(METHOD_NUMBER)");
+		statement.executeUpdate("CREATE INDEX sPathIndex ON DELETE_SENTENCES(PATH)");
+		statement.executeUpdate("CREATE INDEX mNumIndex2 ON DELETE_SENTENCES(METHOD_NUMBER)");
 
 		statement.executeUpdate("CREATE TABLE FILE_CLONES("
 				+ "ID intege, "
@@ -114,43 +117,58 @@ public class DBManager {
 	}
 
 	private static void createPrepareStatement() throws SQLException {
-		mStatement = connection.prepareStatement("INSERT INTO DELETE_METHODS VALUES (?, ?, ?, ?, ?, ?, ?)");
+		insertDeletedMethodInfo = connection.prepareStatement("INSERT INTO DELETE_METHODS VALUES (?, ?, ?, ?, ?, ?, ?)");
 
-		sStatement = connection.prepareStatement("INSERT INTO DELETE_SENTENCES VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+		insertDeletedSentenceInfo = connection.prepareStatement("INSERT INTO DELETE_SENTENCES VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
-		fcStatement = connection.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		insertFileCloneInfo = connection.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-		mcStatement = connection.prepareStatement("INSERT INTO METHOD_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		insertMethodCloneInfo = connection.prepareStatement("INSERT INTO METHOD_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-		cfcStatement = connection.prepareStatement("INSERT INTO CODEFRAGMENT_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		insertCodeFragmentCloneInfo = connection.prepareStatement("INSERT INTO CODEFRAGMENT_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-		searchfc1Statement = connection.prepareStatement("SELECT PATH2 FROM FILE_CLONES WHERE PATH1 = ?;");
+		selectFileClonePath2 = connection.prepareStatement("SELECT PATH2 FROM FILE_CLONES WHERE PATH1 = ?;");
 
-		searchfc2Statement = connection.prepareStatement("SELECT PATH1 FROM FILE_CLONES WHERE PATH2 = ?;");
+		selectFileClonePath1 = connection.prepareStatement("SELECT PATH1 FROM FILE_CLONES WHERE PATH2 = ?;");
 
-		searchmc1Statement = connection.prepareStatement("SELECT PATH2, METHOD_NUMBER2, METHOD_NAME2 FROM METHOD_CLONES WHERE PATH1 = ?  AND METHOD_NUMBER1 = ?;");
+		selectMethodClonePath2 = connection.prepareStatement("SELECT PATH2, METHOD_NUMBER2, METHOD_NAME2 FROM METHOD_CLONES WHERE PATH1 = ?  AND METHOD_NUMBER1 = ?;");
 
-		searchmc2Statement = connection.prepareStatement("SELECT PATH1, METHOD_NUMBER1, METHOD_NAME1 FROM METHOD_CLONES WHERE PATH2 = ?  AND METHOD_NUMBER2 = ?;");
+		selectMethodClonePath1 = connection.prepareStatement("SELECT PATH1, METHOD_NUMBER1, METHOD_NAME1 FROM METHOD_CLONES WHERE PATH2 = ?  AND METHOD_NUMBER2 = ?;");
 
-		searchdmStatement = connection.prepareStatement("SELECT * FROM DELETE_METHODS WHERE PATH = ? AND METHOD_NUMBER = ?;");
+		selectDeletedMethods = connection.prepareStatement("SELECT * FROM DELETE_METHODS WHERE PATH = ? AND METHOD_NUMBER = ?;");
 
-		searchdsStatement = connection.prepareStatement("SELECT * FROM DELETE_SENTENCES WHERE PATH = ? AND METHOD_NUMBER = ?;");
+		selectDeletedSentences = connection.prepareStatement("SELECT * FROM DELETE_SENTENCES WHERE PATH = ? AND METHOD_NUMBER = ?;");
 	}
 
 	public static void closeDB() throws SQLException {
 		connection.commit();
 		if (statement != null) statement.close();
-		if (mStatement != null) mStatement.close();
-		if (sStatement != null) sStatement.close();
-		if (fcStatement != null) fcStatement.close();
-		if (mcStatement != null) mcStatement.close();
-		if (cfcStatement != null) cfcStatement.close();
-		if (searchfc1Statement != null) searchfc1Statement.close();
-		if (searchfc2Statement != null) searchfc2Statement.close();
-		if (searchmc1Statement != null) searchmc1Statement.close();
-		if (searchmc2Statement != null) searchmc2Statement.close();
-		if (searchdmStatement != null) searchdmStatement.close();
-		if (searchdsStatement != null) searchdsStatement.close();
+		if (insertDeletedMethodInfo != null) insertDeletedMethodInfo.close();
+		if (insertDeletedSentenceInfo != null) insertDeletedSentenceInfo.close();
+		if (insertFileCloneInfo != null) insertFileCloneInfo.close();
+		if (insertMethodCloneInfo != null) insertMethodCloneInfo.close();
+		if (insertCodeFragmentCloneInfo != null) insertCodeFragmentCloneInfo.close();
+		if (selectFileClonePath2 != null) selectFileClonePath2.close();
+		if (selectFileClonePath1 != null) selectFileClonePath1.close();
+		if (selectMethodClonePath2 != null) selectMethodClonePath2.close();
+		if (selectMethodClonePath1 != null) selectMethodClonePath1.close();
+		if (selectDeletedMethods != null) selectDeletedMethods.close();
+		if (selectDeletedSentences != null) selectDeletedSentences.close();
 		if (connection != null) connection.close();
+	}
+
+	public static void createInMemoryDB() throws SQLException, ClassNotFoundException {
+		Class.forName("org.sqlite.JDBC");
+		tmpconnection = DriverManager.getConnection("jdbc:sqlite:memory");
+		tmpconnection.setAutoCommit(false);
+		tmpstatement = tmpconnection.createStatement();
+		tmpstatement.executeUpdate("CREATE TABLE TMP_CLONES("
+				+ "PATH string, "
+				+ "METHOD_NAME string, "
+				+ "METHOD_NUMBER INTEGER, "
+				+ "START_LINE INTEGER, "
+				+ "END_LINE INTEGER, "
+				+ "ORIGINAL_HASH string, "
+				+ "NORMALIZED_HASH string)");
 	}
 }
