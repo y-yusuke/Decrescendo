@@ -13,21 +13,21 @@ public class DataAccessObject {
 
 	public static void insertFileClonePairInfo(File fc1, File fc2, int clonePairId, int cloneSetId) {
 		try {
-			DBManager.insertFileCloneInfo.setInt(1, clonePairId);
-			DBManager.insertFileCloneInfo.setString(2, fc1.path);
-			DBManager.insertFileCloneInfo.setInt(3, fc1.startLine);
-			DBManager.insertFileCloneInfo.setInt(4, fc1.endLine);
-			DBManager.insertFileCloneInfo.setString(5, fc2.path);
-			DBManager.insertFileCloneInfo.setInt(6, fc2.startLine);
-			DBManager.insertFileCloneInfo.setInt(7, fc2.endLine);
-			DBManager.insertFileCloneInfo.setInt(8, cloneSetId);
+			DBManager.insertFileCloneInfo_memory.setInt(1, clonePairId);
+			DBManager.insertFileCloneInfo_memory.setString(2, fc1.path);
+			DBManager.insertFileCloneInfo_memory.setInt(3, fc1.startLine);
+			DBManager.insertFileCloneInfo_memory.setInt(4, fc1.endLine);
+			DBManager.insertFileCloneInfo_memory.setString(5, fc2.path);
+			DBManager.insertFileCloneInfo_memory.setInt(6, fc2.startLine);
+			DBManager.insertFileCloneInfo_memory.setInt(7, fc2.endLine);
+			DBManager.insertFileCloneInfo_memory.setInt(8, cloneSetId);
 
 			if (fc1.originalHash.equals(fc2.originalHash))
-				DBManager.insertFileCloneInfo.setInt(9, 1);
+				DBManager.insertFileCloneInfo_memory.setInt(9, 1);
 			else
-				DBManager.insertFileCloneInfo.setInt(9, 2);
+				DBManager.insertFileCloneInfo_memory.setInt(9, 2);
 
-			DBManager.insertFileCloneInfo.addBatch();
+			DBManager.insertFileCloneInfo_memory.addBatch();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -36,25 +36,25 @@ public class DataAccessObject {
 
 	public static void insertMethodClonePairInfo(Method mc1, Method mc2, int clonePairId, int cloneSetId) {
 		try {
-			DBManager.insertMethodCloneInfo.setInt(1, clonePairId);
-			DBManager.insertMethodCloneInfo.setString(2, mc1.path);
-			DBManager.insertMethodCloneInfo.setString(3, mc1.name);
-			DBManager.insertMethodCloneInfo.setInt(4, mc1.order);
-			DBManager.insertMethodCloneInfo.setInt(5, mc1.startLine);
-			DBManager.insertMethodCloneInfo.setInt(6, mc1.endLine);
-			DBManager.insertMethodCloneInfo.setString(7, mc2.path);
-			DBManager.insertMethodCloneInfo.setString(8, mc2.name);
-			DBManager.insertMethodCloneInfo.setInt(9, mc2.order);
-			DBManager.insertMethodCloneInfo.setInt(10, mc2.startLine);
-			DBManager.insertMethodCloneInfo.setInt(11, mc2.startLine);
-			DBManager.insertMethodCloneInfo.setInt(12, cloneSetId);
+			DBManager.insertMethodCloneInfo_memory.setInt(1, clonePairId);
+			DBManager.insertMethodCloneInfo_memory.setString(2, mc1.path);
+			DBManager.insertMethodCloneInfo_memory.setString(3, mc1.name);
+			DBManager.insertMethodCloneInfo_memory.setInt(4, mc1.order);
+			DBManager.insertMethodCloneInfo_memory.setInt(5, mc1.startLine);
+			DBManager.insertMethodCloneInfo_memory.setInt(6, mc1.endLine);
+			DBManager.insertMethodCloneInfo_memory.setString(7, mc2.path);
+			DBManager.insertMethodCloneInfo_memory.setString(8, mc2.name);
+			DBManager.insertMethodCloneInfo_memory.setInt(9, mc2.order);
+			DBManager.insertMethodCloneInfo_memory.setInt(10, mc2.startLine);
+			DBManager.insertMethodCloneInfo_memory.setInt(11, mc2.startLine);
+			DBManager.insertMethodCloneInfo_memory.setInt(12, cloneSetId);
 
 			if (mc1.originalHash.equals(mc2.originalHash))
-				DBManager.insertMethodCloneInfo.setInt(13, 1);
+				DBManager.insertMethodCloneInfo_memory.setInt(13, 1);
 			else
-				DBManager.insertMethodCloneInfo.setInt(13, 2);
+				DBManager.insertMethodCloneInfo_memory.setInt(13, 2);
 
-			DBManager.insertMethodCloneInfo.addBatch();
+			DBManager.insertMethodCloneInfo_memory.addBatch();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -63,22 +63,22 @@ public class DataAccessObject {
 	public static void insertCodeFragmentClonePairInfo(
 			CodeFragment cf1, CloneRange cloneRange1, CodeFragment cf2, CloneRange cloneRange2, int type, int clonePairId, int cloneSetId) {
 		try {
-			DBManager.insertCodeFragmentCloneInfo.setInt(1, clonePairId);
-			DBManager.insertCodeFragmentCloneInfo.setString(2, cf1.path);
-			DBManager.insertCodeFragmentCloneInfo.setString(3, cf1.name);
-			DBManager.insertCodeFragmentCloneInfo.setInt(4, cf1.order);
-			DBManager.insertCodeFragmentCloneInfo.setInt(5, cloneRange1.startLine);
-			DBManager.insertCodeFragmentCloneInfo.setInt(6, cloneRange1.endLine);
-			DBManager.insertCodeFragmentCloneInfo.setString(7, cloneRange1.gapLines);
-			DBManager.insertCodeFragmentCloneInfo.setString(8, cf2.path);
-			DBManager.insertCodeFragmentCloneInfo.setString(9, cf2.name);
-			DBManager.insertCodeFragmentCloneInfo.setInt(10, cf2.order);
-			DBManager.insertCodeFragmentCloneInfo.setInt(11, cloneRange2.startLine);
-			DBManager.insertCodeFragmentCloneInfo.setInt(12, cloneRange2.endLine);
-			DBManager.insertCodeFragmentCloneInfo.setString(13, cloneRange2.gapLines);
-			DBManager.insertCodeFragmentCloneInfo.setInt(14, cloneSetId);
-			DBManager.insertCodeFragmentCloneInfo.setInt(15, type);
-			DBManager.insertCodeFragmentCloneInfo.addBatch();
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(1, clonePairId);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(2, cf1.path);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(3, cf1.name);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(4, cf1.order);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(5, cloneRange1.startLine);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(6, cloneRange1.endLine);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(7, cloneRange1.gapLines);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(8, cf2.path);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(9, cf2.name);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(10, cf2.order);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(11, cloneRange2.startLine);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(12, cloneRange2.endLine);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(13, cloneRange2.gapLines);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(14, cloneSetId);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(15, type);
+			DBManager.insertCodeFragmentCloneInfo_storage.addBatch();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

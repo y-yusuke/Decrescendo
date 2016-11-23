@@ -16,13 +16,16 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.synchronizedList;
 
 public class CodeFragmentCloneDetector {
 	private static int clonePairId;
+	public static List<CodeFragmentClonePair> cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePair>());
 
 	public CodeFragmentCloneDetector() {
 		clonePairId = 0;
@@ -34,6 +37,7 @@ public class CodeFragmentCloneDetector {
 
 		System.out.println("Identifying Sentence...");
 		start = System.currentTimeMillis();
+
 		List<CodeFragment> list = SentenceLexer.getCodeFragmentList(set);
 		set.clear();
 
@@ -41,20 +45,17 @@ public class CodeFragmentCloneDetector {
 		time = (double) (stop - start) / 1000D;
 		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
 
+
 		System.out.println("Detecting Code Fragment Clone...");
 		start = System.currentTimeMillis();
-		List<CodeFragmentClonePair> cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePair>());
 
 		int threadsNum = Runtime.getRuntime().availableProcessors();
 		ExecutorService service;
 
-		List<Future<List<CodeFragmentClonePair>>> futures = new ArrayList<>();
-
 		for (int i = 0; i < list.size() - 1; i++) {
 			service = Executors.newFixedThreadPool(threadsNum);
 			for (int j = i + 1; j < list.size(); j++) {
-				Future<List<CodeFragmentClonePair>> future = service.submit(new SmithWaterman(list.get(i), list.get(j)));
-				futures.add(future);
+				service.execute(new SmithWaterman(list.get(i), list.get(j)));
 			}
 			service.shutdown();
 			while (!service.isTerminated()) {
@@ -66,23 +67,17 @@ public class CodeFragmentCloneDetector {
 			}
 		}
 
-		futures.forEach(e -> {
-			try {
-				List<CodeFragmentClonePair> tmpCfCloneList = e.get();
-				tmpCfCloneList.forEach(cfClonePairList::add);
-			} catch (InterruptedException | ExecutionException e1) {
-				e1.printStackTrace();
-			}
-		});
-
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
 		System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
 
+
 		System.out.println("Outputting Code Fragment Clone Result...");
 		start = System.currentTimeMillis();
+
 		List<List<CodeFragmentClonePair>> cfCloneSets = getCodeFragmentCloneSets(cfClonePairList);
 		outputCodeFragmentCloneResult(cfCloneSets);
+
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
 		System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
@@ -106,15 +101,15 @@ public class CodeFragmentCloneDetector {
 
 			for (CodeFragmentClonePair clonePair : cfClonePairList) {
 				outputCodeFragmentClonePair(clonePair, cloneSetId);
-
-				if (Config.file || Config.method)
+				if (Config.file || Config.method) {
 					searchCodeFragmentCloneInRepresentativeFileAndMethod(clonePair, cloneSetId);
+				}
 			}
 		}
-		DBManager.insertCodeFragmentCloneInfo.executeBatch();
+		DBManager.insertCodeFragmentCloneInfo_storage.executeBatch();
 	}
 
-	private static void outputCodeFragmentClonePair(CodeFragmentClonePair clonePair, int cloneSetId) throws SQLException {
+	private void outputCodeFragmentClonePair(CodeFragmentClonePair clonePair, int cloneSetId) throws SQLException {
 		CodeFragment cf1 = clonePair.clone1;
 		List<Integer> cloneIndexes1 = clonePair.cloneIndexes1;
 		List<Integer> gapIndexes1 = clonePair.gapIndexes1;
@@ -134,23 +129,16 @@ public class CodeFragmentCloneDetector {
 		DataAccessObject.insertCodeFragmentClonePairInfo(cf1, cloneRange1, cf2, cloneRange2, type, clonePairId, cloneSetId);
 
 		if (clonePairId % 1000 == 0)
-			DBManager.insertCodeFragmentCloneInfo.executeBatch();
+			DBManager.insertCodeFragmentCloneInfo_storage.executeBatch();
 		clonePairId++;
 	}
 
-	private static CloneRange getCloneRange(CodeFragment cf, List<Integer> cloneIndexes, List<Integer> gapIndexes) {
+	private CloneRange getCloneRange(CodeFragment cf, List<Integer> cloneIndexes, List<Integer> gapIndexes) {
 		int startIndex = cloneIndexes.get(cloneIndexes.size() - 1);
 		List<Integer> list = cf.lineNumberPerSentence.get(startIndex);
 		int startLine = list.get(0);
 
 		int endIndex = cloneIndexes.get(0);
-		if (cf.lineNumberPerSentence.size() <= endIndex) {
-			System.out.println(cf.path);
-			System.out.println(cf.name);
-			System.out.println(cf.startLine);
-			System.out.println(cf.lineNumberPerSentence.size());
-			System.out.println(endIndex);
-		}
 		list = cf.lineNumberPerSentence.get(endIndex);
 		int endLine = list.get(list.size() - 1);
 
@@ -159,7 +147,7 @@ public class CodeFragmentCloneDetector {
 		return new CloneRange(startLine, endLine, gapSb.toString(), gapLines.size());
 	}
 
-	private static List<Integer> getGapLines(CodeFragment cf, List<Integer> gapIndexes) {
+	private List<Integer> getGapLines(CodeFragment cf, List<Integer> gapIndexes) {
 		List<Integer> gapLines = new ArrayList<>();
 		for (Integer gapIndex : gapIndexes) {
 			int tmp = 0;
@@ -173,7 +161,7 @@ public class CodeFragmentCloneDetector {
 		return gapLines;
 	}
 
-	private static StringBuffer getStringOfGapLines(List<Integer> gapLines) {
+	private StringBuffer getStringOfGapLines(List<Integer> gapLines) {
 		StringBuffer gapSb = new StringBuffer();
 		for (int i = gapLines.size() - 1; i >= 0; i--) {
 			gapSb.append(gapLines.get(i));
@@ -183,7 +171,7 @@ public class CodeFragmentCloneDetector {
 		return gapSb;
 	}
 
-	private static int getCloneType(List<Hash> originalSentences1, List<Hash> originalSentences2, List<Integer> cloneIndexes1, List<Integer> cloneIndexes2) {
+	private int getCloneType(List<Hash> originalSentences1, List<Hash> originalSentences2, List<Integer> cloneIndexes1, List<Integer> cloneIndexes2) {
 		for (int i = 0; i < cloneIndexes1.size(); i++) {
 			if (!originalSentences2.get(cloneIndexes2.get(i)).equals(originalSentences1.get(cloneIndexes1.get(i)))) {
 				return 2;
@@ -243,28 +231,28 @@ public class CodeFragmentCloneDetector {
 		});
 	}
 
-	private List<CodeFragment> searchCodeFragmentCloneInRepresentativeFile(CodeFragment cf1) throws SQLException {
-		DBManager.selectFileClonePath2.setString(1, cf1.path);
+	private List<CodeFragment> searchCodeFragmentCloneInRepresentativeFile(CodeFragment cf) throws SQLException {
+		DBManager.selectFileClonePath2.setString(1, cf.path);
 		List<CodeFragment> others = new ArrayList<>();
 		try (ResultSet results = DBManager.selectFileClonePath2.executeQuery()) {
 			while (results.next()) {
-				others.add(getOther(results.getString(1), cf1.order, cf1.name));
+				others.add(getOther(results.getString(1), cf.order, cf.name));
 			}
 		}
 
-		DBManager.selectFileClonePath1.setString(1, cf1.path);
+		DBManager.selectFileClonePath1.setString(1, cf.path);
 		try (ResultSet results = DBManager.selectFileClonePath1.executeQuery()) {
 			while (results.next()) {
-				others.add(getOther(results.getString(1), cf1.order, cf1.name));
+				others.add(getOther(results.getString(1), cf.order, cf.name));
 			}
 		}
 
 		return others;
 	}
 
-	private List<CodeFragment> searchCodeFragmentCloneInRepresentativeMethod(CodeFragment cf1) throws SQLException {
-		DBManager.selectMethodClonePath2.setString(1, cf1.path);
-		DBManager.selectMethodClonePath2.setInt(2, cf1.order);
+	private List<CodeFragment> searchCodeFragmentCloneInRepresentativeMethod(CodeFragment cf) throws SQLException {
+		DBManager.selectMethodClonePath2.setString(1, cf.path);
+		DBManager.selectMethodClonePath2.setInt(2, cf.order);
 		List<CodeFragment> others = new ArrayList<>();
 		try (ResultSet results = DBManager.selectMethodClonePath2.executeQuery()) {
 			while (results.next()) {
@@ -272,8 +260,8 @@ public class CodeFragmentCloneDetector {
 			}
 		}
 
-		DBManager.selectMethodClonePath1.setString(1, cf1.path);
-		DBManager.selectMethodClonePath1.setInt(2, cf1.order);
+		DBManager.selectMethodClonePath1.setString(1, cf.path);
+		DBManager.selectMethodClonePath1.setInt(2, cf.order);
 		try (ResultSet results = DBManager.selectMethodClonePath1.executeQuery()) {
 			while (results.next()) {
 				others.add(getOther(results.getString(1), results.getInt(2), results.getString(3)));
@@ -304,11 +292,9 @@ public class CodeFragmentCloneDetector {
 			}
 		}
 
-		CodeFragment codeFragment = new CodeFragment(path, name, order, 0, 0,
+		return new CodeFragment(path, name, order, 0, 0,
 				normalizedSentences, originalSentences, lineNumberPerSentenceList
 		);
-
-		return codeFragment;
 	}
 
 	private void insertCodeFragmentCloneInRepresentative(
@@ -325,6 +311,5 @@ public class CodeFragmentCloneDetector {
 			e.printStackTrace();
 		}
 	}
-
 }
 

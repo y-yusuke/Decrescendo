@@ -1,5 +1,6 @@
 package decrescendo.smithwaterman;
 
+import decrescendo.clonedetector.CodeFragmentCloneDetector;
 import decrescendo.codefragmentclone.CodeFragmentClonePair;
 import decrescendo.config.Config;
 import decrescendo.granularity.CodeFragment;
@@ -8,13 +9,12 @@ import decrescendo.hash.HashList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
-public class SmithWaterman implements Callable<List<CodeFragmentClonePair>> {
-	private CodeFragment target1;
-	private CodeFragment target2;
-	private List<Hash> one;
-	private List<Hash> two;
+public class SmithWaterman implements Runnable {
+	private final CodeFragment target1;
+	private final CodeFragment target2;
+	private final List<Hash> one;
+	private final List<Hash> two;
 	private Cell[][] matrix;
 	private final int match = 2;
 	private final int mismatch = -2;
@@ -41,11 +41,12 @@ public class SmithWaterman implements Callable<List<CodeFragmentClonePair>> {
 		}
 	}
 
-	public List<CodeFragmentClonePair> call() {
+	public void run() {
 		initialMatrix();
 		calculateScore();
 		//printMatrix();
-		return traceBack();
+		traceBack();
+		matrix = null;
 	}
 
 	private void initialMatrix() {
@@ -61,107 +62,98 @@ public class SmithWaterman implements Callable<List<CodeFragmentClonePair>> {
 		for (int i = 1; i < one.size(); i++) {
 			for (int j = 1; j < two.size(); j++) {
 				if (one.get(i).equals(two.get(j))) {
-					matrix[i][j].value = Math.max(0, Math.max(matrix[i - 1][j - 1].value + match,
-							Math.max(matrix[i - 1][j].value + gap, matrix[i][j - 1].value + gap)));
+					matrix[i][j].value = Math.max(0,
+							Math.max(matrix[i - 1][j - 1].value + match,
+									Math.max(matrix[i - 1][j].value + gap, matrix[i][j - 1].value + gap)));
 					matrix[i][j].match = true;
 				} else {
-					matrix[i][j].value = Math.max(0, Math.max(matrix[i - 1][j - 1].value + mismatch,
-							Math.max(matrix[i - 1][j].value + gap, matrix[i][j - 1].value + gap)));
+					matrix[i][j].value = Math.max(0,
+							Math.max(matrix[i - 1][j - 1].value + mismatch,
+									Math.max(matrix[i - 1][j].value + gap, matrix[i][j - 1].value + gap)));
 				}
 			}
 		}
 	}
 
-	private List<CodeFragmentClonePair> traceBack() {
-		List<CodeFragmentClonePair> cfClonePairList = new ArrayList<>();
+	private void traceBack() {
 		for (int i = one.size() - 1; i > 0; i--) {
 			for (int j = two.size() - 1; j > 0; j--) {
-				if (!matrix[i][j].isChecked() && matrix[i][j].isMatch()) { //FIXME//FIX
+				if (!matrix[i][j].isChecked() && matrix[i][j].isMatch()) {
 					CodeFragmentClonePair cfClonePair = startTraceBack(i, j);
-					if (cfClonePair != null)
-						cfClonePairList.add(cfClonePair);
+
+					if (cfClonePair != null) {
+						CodeFragmentCloneDetector.cfClonePairList.add(cfClonePair);
+					}
 				}
 			}
 		}
-		freeMemory();
-		return cfClonePairList;
-	}
-
-	private void freeMemory() {
-		one = null;
-		two = null;
-		matrix = null;
 	}
 
 	private CodeFragmentClonePair startTraceBack(int i, int j) {
-		int iL = i;
-		int jL = j;
 		List<Hash> commonHashList = new ArrayList<>();
 		List<Integer> cloneIndexes1 = new ArrayList<>();
 		List<Integer> cloneIndexes2 = new ArrayList<>();
 		List<Integer> gapIndexes1 = new ArrayList<>();
 		List<Integer> gapIndexes2 = new ArrayList<>();
-		int gapTokenSize1 = 0;
-		int gapTokenSize2 = 0;
 		int localMaxCell[] = getLocalMaxCell(i, j);
-		i = localMaxCell[0];
-		j = localMaxCell[1];
+		int iL = localMaxCell[0];
+		int jL = localMaxCell[1];
 
-		while (i != 0 && j != 0) {
-			int max = Math.max(matrix[i - 1][j - 1].value, Math.max(matrix[i - 1][j].value, matrix[i][j - 1].value));
+		while (iL != 0 && jL != 0) {
+			int max = Math.max(matrix[iL - 1][jL - 1].value, Math.max(matrix[iL - 1][jL].value, matrix[iL][jL - 1].value));
 			// break
 			if (max == 0) {
-				commonHashList.add(one.get(i));
-				cloneIndexes1.add(i);
-				cloneIndexes2.add(j);
+				commonHashList.add(one.get(iL));
+				cloneIndexes1.add(iL);
+				cloneIndexes2.add(jL);
 				break;
 			}
 			// diag case
-			else if (max == matrix[i - 1][j - 1].value) { //FIXME
-				cloneIndexes1.add(i);
-				cloneIndexes2.add(j);
-				if (matrix[i][j].isMatch()) {
-					commonHashList.add(one.get(i));
+			else if (max == matrix[iL - 1][jL - 1].value) {
+				cloneIndexes1.add(iL);
+				cloneIndexes2.add(jL);
+				if (matrix[iL][jL].isMatch()) {
+					commonHashList.add(one.get(iL));
 				} else {
-					gapIndexes1.add(i);
-					gapTokenSize1 += target1.lineNumberPerSentence.get(i).size();
-					gapIndexes2.add(j);
-					gapTokenSize2 += target2.lineNumberPerSentence.get(j).size();
+					gapIndexes1.add(iL);
+					gapIndexes2.add(jL);
 				}
-				i = i - 1;
-				j = j - 1;
+				iL = iL - 1;
+				jL = jL - 1;
 			}
 			// left case
-			else if (max == matrix[i - 1][j].value) {
-				cloneIndexes1.add(i);
-				gapIndexes1.add(i);
-				gapTokenSize1 += target1.lineNumberPerSentence.get(i).size();
-				i = i - 1;
+			else if (max == matrix[iL - 1][jL].value) {
+				cloneIndexes1.add(iL);
+				gapIndexes1.add(iL);
+				iL = iL - 1;
 			}
 			// up case
 			else {
-				cloneIndexes2.add(j);
-				gapIndexes2.add(j);
-				gapTokenSize2 += target2.lineNumberPerSentence.get(j).size();
-				j = j - 1;
+				cloneIndexes2.add(jL);
+				gapIndexes2.add(jL);
+				jL = jL - 1;
 			}
 		}
-		for (int p = i; p <= iL; p++)
-			for (int q = j; q <= jL; q++)
+
+		for (int p = iL; p <= i; p++) {
+			for (int q = jL; q <= j; q++) {
 				matrix[p][q].switchToChecked();
-		if (checkClone(cloneIndexes1, cloneIndexes2, gapTokenSize1, gapTokenSize2))
-			return new CodeFragmentClonePair(target1, target2, // FIXME//FIX
-					new HashList(commonHashList), cloneIndexes1, cloneIndexes2,
-					gapIndexes1, gapIndexes2);
-		else
+			}
+		}
+
+		if (checkClone(cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2)) {
+			return new CodeFragmentClonePair(target1, target2, new HashList(commonHashList), cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
+		} else {
 			return null;
+		}
 	}
 
 	private int[] getLocalMaxCell(int i, int j) {
 		int localMaxCell[] = new int[2];
+
 		while (i != 0 && j != 0) {
-			int max = Math.max(0,
-					Math.max(matrix[i - 1][j - 1].value, Math.max(matrix[i - 1][j].value, matrix[i][j - 1].value)));
+			int max = Math.max(0, Math.max(matrix[i - 1][j - 1].value, Math.max(matrix[i - 1][j].value, matrix[i][j - 1].value)));
+
 			if (max < matrix[i][j].value) {
 				localMaxCell[0] = i;
 				localMaxCell[1] = j;
@@ -175,13 +167,15 @@ public class SmithWaterman implements Callable<List<CodeFragmentClonePair>> {
 				j = j - 1;
 			}
 		}
+
 		return localMaxCell;
 	}
 
-	private boolean checkClone(List<Integer> cloneIndexes1, List<Integer> cloneIndexes2, int gapTokenSize1,
-							   int gapTokenSize2) {
+	private boolean checkClone(List<Integer> cloneIndexes1, List<Integer> cloneIndexes2, List<Integer> gapIndexes1, List<Integer> gapIndexes2) {
 		int tokenSize1 = getTokenSize(target1, cloneIndexes1);
 		int tokenSize2 = getTokenSize(target2, cloneIndexes2);
+		int gapTokenSize1 = getTokenSize(target1, gapIndexes1);
+		int gapTokenSize2 = getTokenSize(target2, gapIndexes2);
 
 		if (tokenSize1 < Config.cfMinTokens) return false;
 		if (tokenSize2 < Config.cfMinTokens) return false;
@@ -190,10 +184,13 @@ public class SmithWaterman implements Callable<List<CodeFragmentClonePair>> {
 		return true;
 	}
 
-	private int getTokenSize(CodeFragment cf, List<Integer> cloneIndexes) {
+	private int getTokenSize(CodeFragment cf, List<Integer> indexes) {
 		int tokenSize = 0;
-		for (int i : cloneIndexes)
+
+		for (int i : indexes) {
 			tokenSize += cf.lineNumberPerSentence.get(i).size();
+		}
+
 		return tokenSize;
 	}
 

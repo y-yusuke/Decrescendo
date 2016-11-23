@@ -45,8 +45,8 @@ public class Main {
 			double time = (double) (stop - start) / 1000D;
 			System.out.println((new StringBuilder("Execution Time :")).append(time).append(" s").toString());
 		} catch (Exception e) {
-			e.printStackTrace();
 			DBManager.closeDB();
+			e.printStackTrace();
 		}
 	}
 

@@ -89,7 +89,7 @@ public class FileCloneDetector {
 					DataAccessObject.insertFileClonePairInfo(fileClone1, fileClone2, clonePairId, cloneSetId);
 
 					if (clonePairId % 1000 == 0)
-						DBManager.insertFileCloneInfo.executeBatch();
+						DBManager.insertFileCloneInfo_memory.executeBatch();
 
 					clonePairId++;
 
@@ -112,7 +112,7 @@ public class FileCloneDetector {
 			}
 		}
 
-		DBManager.insertFileCloneInfo.executeBatch();
+		DBManager.insertFileCloneInfo_memory.executeBatch();
 
 		return fileSet;
 	}

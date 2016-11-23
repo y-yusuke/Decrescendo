@@ -93,7 +93,7 @@ public class MethodCloneDetector {
 					DataAccessObject.insertMethodClonePairInfo(methodClone1, methodClone2, clonePairId, cloneSetId);
 
 					if (clonePairId % 1000 == 0)
-						DBManager.insertMethodCloneInfo.executeBatch();
+						DBManager.insertMethodCloneInfo_memory.executeBatch();
 
 					clonePairId++;
 
@@ -128,7 +128,7 @@ public class MethodCloneDetector {
 				methodSet.add(tmpMethod);
 			}
 		}
-		DBManager.insertMethodCloneInfo.executeBatch();
+		DBManager.insertMethodCloneInfo_memory.executeBatch();
 		return methodSet;
 	}
 
