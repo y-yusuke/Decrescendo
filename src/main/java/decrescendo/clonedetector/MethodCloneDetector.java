@@ -128,7 +128,9 @@ public class MethodCloneDetector {
 				methodSet.add(tmpMethod);
 			}
 		}
+
 		DBManager.insertMethodCloneInfo_memory.executeBatch();
+
 		return methodSet;
 	}
 

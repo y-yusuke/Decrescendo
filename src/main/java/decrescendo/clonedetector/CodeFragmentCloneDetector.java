@@ -293,7 +293,7 @@ public class CodeFragmentCloneDetector {
 		}
 
 		return new CodeFragment(path, name, order, 0, 0,
-				normalizedSentences, originalSentences, lineNumberPerSentenceList
+				normalizedSentences, originalSentences, lineNumberPerSentenceList, null
 		);
 	}
 

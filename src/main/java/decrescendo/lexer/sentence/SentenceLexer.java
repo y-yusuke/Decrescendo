@@ -162,7 +162,7 @@ public class SentenceLexer {
 
 		}
 
-		CodeFragment codeFragment = new CodeFragment(e.path, e.name, e.order, e.startLine, e.endLine, normalizedSentences, originalSentences, lineNumberPerSentence);
+		CodeFragment codeFragment = new CodeFragment(e.path, e.name, e.order, e.startLine, e.endLine, normalizedSentences, originalSentences, lineNumberPerSentence, e.normalizedHash);
 		codeFragment.representative = e.representative;
 
 		return codeFragment;

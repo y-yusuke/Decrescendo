@@ -21,14 +21,8 @@ public class SmithWaterman implements Runnable {
 	private final int gap = -1;
 
 	public SmithWaterman(CodeFragment target1, CodeFragment target2) {
-		int compare = target1.path.compareTo(target2.path);
-
+		int compare = target1.id.compareTo(target2.id);
 		if (compare > 0) {
-			this.target1 = target1;
-			this.target2 = target2;
-			this.one = target1.normalizedSentences;
-			this.two = target2.normalizedSentences;
-		} else if (compare == 0 && target1.order > target2.order) {
 			this.target1 = target1;
 			this.target2 = target2;
 			this.one = target1.normalizedSentences;

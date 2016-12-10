@@ -81,8 +81,8 @@ public class DBManager {
 				+ "END_LINE2 INTEGER, "
 				+ "CLONESET_ID INTEGER, "
 				+ "TYPE INTEGER)");
-		statement_memory.executeUpdate("CREATE INDEX mcIndex1 ON METHOD_CLONES(PATH1)");
-		statement_memory.executeUpdate("CREATE INDEX mcIndex2 ON METHOD_CLONES(PATH2)");
+		statement_memory.executeUpdate("CREATE INDEX mcPathIndex1 ON METHOD_CLONES(PATH1)");
+		statement_memory.executeUpdate("CREATE INDEX mcPathIndex2 ON METHOD_CLONES(PATH2)");
 
 		statement_memory.executeUpdate("CREATE TABLE DELETE_METHODS("
 				+ "PATH string, "
@@ -93,7 +93,6 @@ public class DBManager {
 				+ "ORIGINAL_HASH string, "
 				+ "NORMALIZED_HASH string)");
 		statement_memory.executeUpdate("CREATE INDEX mPathIndex ON DELETE_METHODS(PATH)");
-		statement_memory.executeUpdate("CREATE INDEX mNumIndex ON DELETE_METHODS(METHOD_NUMBER)");
 
 		statement_memory.executeUpdate("CREATE TABLE DELETE_SENTENCES("
 				+ "PATH string, "
@@ -105,7 +104,6 @@ public class DBManager {
 				+ "ORIGINAL_HASH BLOB, "
 				+ "NORMALIZED_HASH BLOB)");
 		statement_memory.executeUpdate("CREATE INDEX sPathIndex ON DELETE_SENTENCES(PATH)");
-		statement_memory.executeUpdate("CREATE INDEX mNumIndex2 ON DELETE_SENTENCES(METHOD_NUMBER)");
 
 		statement_storage.executeUpdate("CREATE TABLE FILE_CLONES("
 				+ "ID intege, "
@@ -117,6 +115,7 @@ public class DBManager {
 				+ "END_LINE2 INTEGER, "
 				+ "CLONESET_ID INTEGER, "
 				+ "TYPE INTEGER)");
+		statement_storage.executeUpdate("CREATE INDEX fcIndex ON FILE_CLONES(CLONESET_ID)");
 
 		statement_storage.executeUpdate("CREATE TABLE METHOD_CLONES("
 				+ "ID INTEGER, "
@@ -132,6 +131,7 @@ public class DBManager {
 				+ "END_LINE2 INTEGER, "
 				+ "CLONESET_ID INTEGER, "
 				+ "TYPE INTEGER)");
+		statement_storage.executeUpdate("CREATE INDEX mcIndex ON METHOD_CLONES(CLONESET_ID)");
 
 		statement_storage.executeUpdate("CREATE TABLE CODEFRAGMENT_CLONES("
 				+ "ID INTEGER, "
@@ -149,6 +149,7 @@ public class DBManager {
 				+ "GAP_LINE2 string, "
 				+ "CLONESET_ID INTEGER, "
 				+ "TYPE INTEGER)");
+		statement_storage.executeUpdate("CREATE INDEX cfcIndex ON CODEFRAGMENT_CLONES(CLONESET_ID)");
 	}
 
 	private static void createPrepareStatement() throws SQLException {

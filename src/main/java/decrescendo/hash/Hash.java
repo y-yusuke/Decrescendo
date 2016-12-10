@@ -24,4 +24,17 @@ public class Hash {
 	public int hashCode() {
 		return this.hashCode;
 	}
+
+
+	public int compareTo(Hash hash2) {
+		for (int i = 0; i < this.hash.length; i++) {
+			if (this.hash[i] > hash2.hash[i]) {
+				return 1;
+			}
+			if (this.hash[i] < hash2.hash[i]) {
+				return -1;
+			}
+		}
+		return 0;
+	}
 }
