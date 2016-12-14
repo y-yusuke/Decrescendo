@@ -42,22 +42,30 @@ public class MethodCloneDetector {
 
 		System.out.println("Parsing Method...");
 		start = System.currentTimeMillis();
+
 		HashSet<Method> methodSet = methodLexer.getMethodSet(files);
+
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
 		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
 
+
 		if (Config.method) {
 			System.out.println("Detecting Method Code Clone...");
 			start = System.currentTimeMillis();
+
 			List<List<Method>> methodCloneSets = getMethodCloneSets(methodSet);
+
 			stop = System.currentTimeMillis();
 			time = (double) (stop - start) / 1000D;
 			System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
 
+
 			System.out.println("Outputting Method Code Clone Result...");
 			start = System.currentTimeMillis();
-			methodSet = outputMethodCloneResult(methodCloneSets, methodSet);
+
+			outputMethodCloneResult(methodCloneSets, methodSet);
+
 			stop = System.currentTimeMillis();
 			time = (double) (stop - start) / 1000D;
 			System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
@@ -79,7 +87,7 @@ public class MethodCloneDetector {
 				.collect(Collectors.toList());
 	}
 
-	private HashSet<Method> outputMethodCloneResult(List<List<Method>> methodCloneSets, HashSet<Method> methodSet)
+	private void outputMethodCloneResult(List<List<Method>> methodCloneSets, HashSet<Method> methodSet)
 			throws SQLException, IOException {
 		for (int cloneSetId = 0; cloneSetId < methodCloneSets.size(); cloneSetId++) {
 			List<Method> methodCloneSet = methodCloneSets.get(cloneSetId);
@@ -130,8 +138,6 @@ public class MethodCloneDetector {
 		}
 
 		DBManager.insertMethodCloneInfo_memory.executeBatch();
-
-		return methodSet;
 	}
 
 	private void insertDeleteMethodInfo(Method method) throws SQLException {
@@ -142,8 +148,8 @@ public class MethodCloneDetector {
 
 	private void searchMethodCloneInRepresentativeFile(Method methodClone1, Method methodClone2, int cloneSetId)
 			throws SQLException, IOException {
-		List<Method> otherFile1 = new ArrayList<>();
-		List<Method> otherFile2 = new ArrayList<>();
+		List<Method> otherFile1;
+		List<Method> otherFile2;
 
 		DBManager.selectFileClonePath2.setString(1, methodClone1.path);
 
@@ -159,13 +165,12 @@ public class MethodCloneDetector {
 			otherFile2.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, cloneSetId));
 		}
 
-		List<Method> finalOtherFile = otherFile2;
-		otherFile1.forEach(e1 -> finalOtherFile.forEach(e2 -> insertMethodCloneInRepresentativeFile(e1, e2, cloneSetId)));
+		otherFile1.forEach(e1 -> otherFile2.forEach(e2 -> insertMethodCloneInRepresentativeFile(e1, e2, cloneSetId)));
 	}
 
 	private List<Method> getOther(ResultSet results, int order)
 			throws SQLException {
-		List<Method> otherFile1 = new ArrayList<>();
+		List<Method> otherFile = new ArrayList<>();
 
 		while (results.next()) {
 			DBManager.selectDeletedMethods.setString(1, results.getString(1));
@@ -173,15 +178,12 @@ public class MethodCloneDetector {
 
 			try (ResultSet results2 = DBManager.selectDeletedMethods.executeQuery()) {
 				while (results2.next()) {
-					Method method = new Method(results2.getString(1), results2.getString(2), results2.getInt(3),
-							results2.getInt(4), results2.getInt(5),
-							new Hash(results2.getBytes(7)), new Hash(results2.getBytes(6)),
-							null, null, null);
-					otherFile1.add(method);
+					Method method = new Method(results2.getString(1), results2.getString(2), results2.getInt(3), results2.getInt(4), results2.getInt(5), new Hash(results2.getBytes(7)), new Hash(results2.getBytes(6)), null, null, null);
+					otherFile.add(method);
 				}
 			}
 		}
-		return otherFile1;
+		return otherFile;
 	}
 
 

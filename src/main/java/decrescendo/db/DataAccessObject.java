@@ -15,17 +15,13 @@ public class DataAccessObject {
 		try {
 			DBManager.insertFileCloneInfo_memory.setInt(1, clonePairId);
 			DBManager.insertFileCloneInfo_memory.setString(2, fc1.path);
-			DBManager.insertFileCloneInfo_memory.setInt(3, fc1.startLine);
-			DBManager.insertFileCloneInfo_memory.setInt(4, fc1.endLine);
-			DBManager.insertFileCloneInfo_memory.setString(5, fc2.path);
-			DBManager.insertFileCloneInfo_memory.setInt(6, fc2.startLine);
-			DBManager.insertFileCloneInfo_memory.setInt(7, fc2.endLine);
-			DBManager.insertFileCloneInfo_memory.setInt(8, cloneSetId);
+			DBManager.insertFileCloneInfo_memory.setString(3, fc2.path);
+			DBManager.insertFileCloneInfo_memory.setInt(4, cloneSetId);
 
 			if (fc1.originalHash.equals(fc2.originalHash))
-				DBManager.insertFileCloneInfo_memory.setInt(9, 1);
+				DBManager.insertFileCloneInfo_memory.setInt(5, 1);
 			else
-				DBManager.insertFileCloneInfo_memory.setInt(9, 2);
+				DBManager.insertFileCloneInfo_memory.setInt(5, 2);
 
 			DBManager.insertFileCloneInfo_memory.addBatch();
 		} catch (SQLException e) {
@@ -46,7 +42,7 @@ public class DataAccessObject {
 			DBManager.insertMethodCloneInfo_memory.setString(8, mc2.name);
 			DBManager.insertMethodCloneInfo_memory.setInt(9, mc2.order);
 			DBManager.insertMethodCloneInfo_memory.setInt(10, mc2.startLine);
-			DBManager.insertMethodCloneInfo_memory.setInt(11, mc2.startLine);
+			DBManager.insertMethodCloneInfo_memory.setInt(11, mc2.endLine);
 			DBManager.insertMethodCloneInfo_memory.setInt(12, cloneSetId);
 
 			if (mc1.originalHash.equals(mc2.originalHash))

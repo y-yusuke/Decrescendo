@@ -57,11 +57,7 @@ public class DBManager {
 		statement_memory.executeUpdate("CREATE TABLE FILE_CLONES("
 				+ "ID intege, "
 				+ "PATH1 string, "
-				+ "START_LINE1 INTEGER, "
-				+ "END_LINE1 INTEGER, "
 				+ "PATH2 string, "
-				+ "START_LINE2 INTEGER, "
-				+ "END_LINE2 INTEGER, "
 				+ "CLONESET_ID INTEGER, "
 				+ "TYPE INTEGER)");
 		statement_memory.executeUpdate("CREATE INDEX fcIndex1 ON FILE_CLONES(PATH1)");
@@ -108,11 +104,7 @@ public class DBManager {
 		statement_storage.executeUpdate("CREATE TABLE FILE_CLONES("
 				+ "ID intege, "
 				+ "PATH1 string, "
-				+ "START_LINE1 INTEGER, "
-				+ "END_LINE1 INTEGER, "
 				+ "PATH2 string, "
-				+ "START_LINE2 INTEGER, "
-				+ "END_LINE2 INTEGER, "
 				+ "CLONESET_ID INTEGER, "
 				+ "TYPE INTEGER)");
 		statement_storage.executeUpdate("CREATE INDEX fcIndex ON FILE_CLONES(CLONESET_ID)");
@@ -156,7 +148,7 @@ public class DBManager {
 		insertDeletedMethodInfo = connection_memory.prepareStatement("INSERT INTO DELETE_METHODS VALUES (?, ?, ?, ?, ?, ?, ?)");
 		insertDeletedSentenceInfo = connection_memory.prepareStatement("INSERT INTO DELETE_SENTENCES VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
-		insertFileCloneInfo_memory = connection_memory.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		insertFileCloneInfo_memory = connection_memory.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?)");
 		insertMethodCloneInfo_memory = connection_memory.prepareStatement("INSERT INTO METHOD_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 		selectFileClonePath2 = connection_memory.prepareStatement("SELECT PATH2 FROM FILE_CLONES WHERE PATH1 = ?;");
@@ -168,7 +160,7 @@ public class DBManager {
 		selectDeletedMethods = connection_memory.prepareStatement("SELECT * FROM DELETE_METHODS WHERE PATH = ? AND METHOD_NUMBER = ?;");
 		selectDeletedSentences = connection_memory.prepareStatement("SELECT * FROM DELETE_SENTENCES WHERE PATH = ? AND METHOD_NUMBER = ?;");
 
-		insertFileCloneInfo_storage = connection_storage.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+		insertFileCloneInfo_storage = connection_storage.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?)");
 		insertMethodCloneInfo_storage = connection_storage.prepareStatement("INSERT INTO METHOD_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 		insertCodeFragmentCloneInfo_storage = connection_storage.prepareStatement("INSERT INTO CODEFRAGMENT_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	}
@@ -180,13 +172,9 @@ public class DBManager {
 			while (results.next()) {
 				insertFileCloneInfo_storage.setInt(1, results.getInt(1));
 				insertFileCloneInfo_storage.setString(2, results.getString(2));
-				insertFileCloneInfo_storage.setInt(3, results.getInt(3));
+				insertFileCloneInfo_storage.setString(3, results.getString(3));
 				insertFileCloneInfo_storage.setInt(4, results.getInt(4));
-				insertFileCloneInfo_storage.setString(5, results.getString(5));
-				insertFileCloneInfo_storage.setInt(6, results.getInt(6));
-				insertFileCloneInfo_storage.setInt(7, results.getInt(7));
-				insertFileCloneInfo_storage.setInt(8, results.getInt(8));
-				insertFileCloneInfo_storage.setInt(9, results.getInt(9));
+				insertFileCloneInfo_storage.setInt(5, results.getInt(5));
 				insertFileCloneInfo_storage.addBatch();
 			}
 		}
@@ -197,9 +185,9 @@ public class DBManager {
 				insertMethodCloneInfo_storage.setInt(1, results.getInt(1));
 				insertMethodCloneInfo_storage.setString(2, results.getString(2));
 				insertMethodCloneInfo_storage.setString(3, results.getString(3));
-				insertMethodCloneInfo_storage.setInt(4, results.getInt(3));
-				insertMethodCloneInfo_storage.setInt(5, results.getInt(4));
-				insertMethodCloneInfo_storage.setInt(6, results.getInt(5));
+				insertMethodCloneInfo_storage.setInt(4, results.getInt(4));
+				insertMethodCloneInfo_storage.setInt(5, results.getInt(5));
+				insertMethodCloneInfo_storage.setInt(6, results.getInt(6));
 				insertMethodCloneInfo_storage.setString(7, results.getString(7));
 				insertMethodCloneInfo_storage.setString(8, results.getString(8));
 				insertMethodCloneInfo_storage.setInt(9, results.getInt(9));

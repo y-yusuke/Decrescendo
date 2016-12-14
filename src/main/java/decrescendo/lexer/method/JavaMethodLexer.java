@@ -28,19 +28,19 @@ public class JavaMethodLexer implements MethodLexer {
 	public HashSet<Method> getMethodSet(HashSet<File> files) throws IOException {
 		return files.stream()
 				.parallel()
-				.map(e -> getMethodInfo(e.path, e.source, e.representative))
+				.map(e -> getMethodObjects(e.path, e.code, e.representative))
 				.filter(e -> e != null)
 				.flatMap(Collection::stream)
 				.collect(Collectors.toCollection(HashSet::new));
 	}
 
 	@Override
-	public HashSet<Method> getMethodInfo(String path, String source, int representative) {
+	public HashSet<Method> getMethodObjects(String path, String code, int representative) {
 		HashSet<Method> methodSet = new HashSet<>();
+
 		final ASTParser parser = ASTParser.newParser(AST.JLS8);
-		//	parser.setIgnoreMethodBodies(true);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
-		parser.setSource(source.toCharArray());
+		parser.setSource(code.toCharArray());
 		final CompilationUnit unit = (CompilationUnit) parser.createAST(new NullProgressMonitor());
 
 		unit.accept(new ASTVisitor() {
@@ -48,16 +48,17 @@ public class JavaMethodLexer implements MethodLexer {
 
 			@Override
 			public boolean visit(MethodDeclaration node) {
-				if (node.isConstructor())
+				if (node.isConstructor()) {
 					return super.visit(node);
+				}
 
 				int startLine = unit.getLineNumber(node.getName().getStartPosition());
 				int endLine = unit.getLineNumber(node.getStartPosition() + node.getLength());
-				String methodSource = getJavaMethodSourceCode(source, startLine, endLine);
+				String methodCode = getJavaMethodCode(code, startLine, endLine);
 
 				try {
 					Scanner scanner = new Scanner();
-					scanner.setSource(methodSource.toCharArray());
+					scanner.setSource(methodCode.toCharArray());
 					scanner.recordLineSeparator = true;
 					scanner.sourceLevel = ClassFileConstants.JDK1_8;
 
@@ -67,7 +68,7 @@ public class JavaMethodLexer implements MethodLexer {
 					List<String> originalTokens = new ArrayList<>();
 					List<Integer> lineNumberPerToken = new ArrayList<>();
 
-					int separatedTokenCount = 0;
+					int separateTokenCount = 0;
 
 					label:
 					while (true) {
@@ -97,11 +98,10 @@ public class JavaMethodLexer implements MethodLexer {
 							case TokenNameLBRACE:
 							case TokenNameRBRACE:
 							case TokenNameSEMICOLON:
-								separatedTokenCount++;
+								separateTokenCount++;
 								normalizedTokens.add(scanner.getCurrentTokenString());
 								originalTokens.add(scanner.getCurrentTokenString());
-								lineNumberPerToken
-										.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+								lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
 								break;
 
 							case TokenNameIdentifier:
@@ -115,8 +115,7 @@ public class JavaMethodLexer implements MethodLexer {
 								originalSb.append(scanner.getCurrentTokenString());
 								normalizedTokens.add("$");
 								originalTokens.add(scanner.getCurrentTokenString());
-								lineNumberPerToken
-										.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+								lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
 								break;
 
 							default:
@@ -124,15 +123,16 @@ public class JavaMethodLexer implements MethodLexer {
 								originalSb.append(scanner.getCurrentTokenString());
 								normalizedTokens.add(scanner.getCurrentTokenString());
 								originalTokens.add(scanner.getCurrentTokenString());
-								lineNumberPerToken
-										.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+								lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
 						}
 					}
 
-					if (normalizedTokens.size() - separatedTokenCount >= Config.mMinTokens) {
-						Method method = new Method(path, node.getName().toString(), methodOrder, startLine, endLine,
-								new Hash(HashCreator.getHash(normalizedSb.toString())), new Hash(HashCreator.getHash(originalSb.toString())),
-								normalizedTokens, originalTokens, lineNumberPerToken);
+					if (normalizedTokens.size() - separateTokenCount >= Config.mMinTokens) {
+						String name = node.getName().toString();
+						Hash normalizedHash = new Hash(HashCreator.getHash(normalizedSb.toString()));
+						Hash originalHash = new Hash(HashCreator.getHash(originalSb.toString()));
+						Method method = new Method(path, name, methodOrder, startLine, endLine, normalizedHash, originalHash, normalizedTokens, originalTokens, lineNumberPerToken);
+
 						method.representative = representative;
 						methodSet.add(method);
 					}
@@ -141,26 +141,38 @@ public class JavaMethodLexer implements MethodLexer {
 					return super.visit(node);
 
 				} catch (InvalidInputException e) {
-					System.err.println("Cannot parse this file: " + path);
+					System.err.println("Cannot parse this method: " + path + "\t" + node.getName().toString());
 					e.printStackTrace();
 					System.err.println();
 					return false;
 				}
 			}
 		});
-		if (methodSet.size() != 0)
+
+		if (methodSet.size() != 0) {
 			return methodSet;
-		else
+		} else {
 			return null;
+		}
 	}
 
-	private static String getJavaMethodSourceCode(String source, int startLine, int endLine) {
+	private String getJavaMethodCode(String source, int startLine, int endLine) {
 		StringBuilder methodSource = new StringBuilder();
 		String[] strs = source.split("\n");
-		for (int i = startLine; i <= endLine; i++) {
+		for (int i = startLine; i < endLine; i++) {
 			methodSource.append(strs[i - 1]);
 			methodSource.append("\n");
 		}
+
+		int lastIndexBrace = strs[endLine - 1].lastIndexOf("}");
+		int lastIndexSemicolon = strs[endLine - 1].lastIndexOf(";");
+
+		if (lastIndexBrace > lastIndexSemicolon) {
+			methodSource.append(strs[endLine - 1].substring(0, lastIndexBrace + 1));
+		} else {
+			methodSource.append(strs[endLine - 1].substring(0, lastIndexSemicolon + 1));
+		}
+
 		return methodSource.toString();
 	}
 }

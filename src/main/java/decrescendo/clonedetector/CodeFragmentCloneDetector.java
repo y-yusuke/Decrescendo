@@ -121,15 +121,17 @@ public class CodeFragmentCloneDetector {
 		CloneRange cloneRange2 = getCloneRange(cf2, cloneIndexes2, gapIndexes2);
 
 		int type;
-		if (cloneRange1.gapLineSize != 0 || cloneRange2.gapLineSize != 0)
+		if (cloneRange1.gapLineSize != 0 || cloneRange2.gapLineSize != 0) {
 			type = 3;
-		else
+		} else {
 			type = getCloneType(cf1.originalSentences, cf2.originalSentences, cloneIndexes1, cloneIndexes2);
+		}
 
 		DataAccessObject.insertCodeFragmentClonePairInfo(cf1, cloneRange1, cf2, cloneRange2, type, clonePairId, cloneSetId);
 
-		if (clonePairId % 1000 == 0)
+		if (clonePairId % 1000 == 0) {
 			DBManager.insertCodeFragmentCloneInfo_storage.executeBatch();
+		}
 		clonePairId++;
 	}
 
@@ -153,8 +155,9 @@ public class CodeFragmentCloneDetector {
 			int tmp = 0;
 			for (int p = cf.lineNumberPerSentence.get(gapIndex).size() - 1; p >= 0; p--) {
 				int gapLine = cf.lineNumberPerSentence.get(gapIndex).get(p);
-				if (gapLine != tmp)
+				if (gapLine != tmp) {
 					gapLines.add(gapLine);
+				}
 				tmp = gapLine;
 			}
 		}
@@ -165,8 +168,9 @@ public class CodeFragmentCloneDetector {
 		StringBuffer gapSb = new StringBuffer();
 		for (int i = gapLines.size() - 1; i >= 0; i--) {
 			gapSb.append(gapLines.get(i));
-			if (i != 0)
+			if (i != 0) {
 				gapSb.append(",");
+			}
 		}
 		return gapSb;
 	}
@@ -292,18 +296,12 @@ public class CodeFragmentCloneDetector {
 			}
 		}
 
-		return new CodeFragment(path, name, order, 0, 0,
-				normalizedSentences, originalSentences, lineNumberPerSentenceList, null
-		);
+		return new CodeFragment(path, name, order, normalizedSentences, originalSentences, lineNumberPerSentenceList, null);
 	}
 
-	private void insertCodeFragmentCloneInRepresentative(
-			CodeFragment cf1, List<Integer> cloneIndexes1, List<Integer> gapIndexes1,
-			CodeFragment cf2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2,
-			int cloneSetId) {
+	private void insertCodeFragmentCloneInRepresentative(CodeFragment cf1, List<Integer> cloneIndexes1, List<Integer> gapIndexes1, CodeFragment cf2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2, int cloneSetId) {
 
-		CodeFragmentClonePair cfClonePair = new CodeFragmentClonePair(
-				cf1, cf2, null, cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
+		CodeFragmentClonePair cfClonePair = new CodeFragmentClonePair(cf1, cf2, null, cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
 
 		try {
 			outputCodeFragmentClonePair(cfClonePair, cloneSetId);

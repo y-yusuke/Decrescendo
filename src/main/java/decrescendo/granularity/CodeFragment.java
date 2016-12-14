@@ -12,9 +12,9 @@ public class CodeFragment extends Granularity {
 	public final List<List<Integer>> lineNumberPerSentence;
 	public final Hash id;
 
-	public CodeFragment(String path, String name, int order, int startLine, int endLine,
-						List<Hash> normalizedSentences, List<Hash> originalSentences, List<List<Integer>> lineNumberPerSentence, Hash id) {
-		super(path, null, null, startLine, endLine);
+	public CodeFragment(String path, String name, int order, List<Hash> normalizedSentences, List<Hash> originalSentences, List<List<Integer>> lineNumberPerSentence, Hash id) {
+		super(path, null, null);
+
 		this.name = name;
 		this.order = order;
 		this.normalizedSentences = normalizedSentences;

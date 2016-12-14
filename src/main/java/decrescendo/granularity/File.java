@@ -3,12 +3,11 @@ package decrescendo.granularity;
 import decrescendo.hash.Hash;
 
 public class File extends Granularity {
-	public final String source;
+	public final String code;
 
-	public File(String path, int startLine, int endLine,
-				Hash normalizedHash, Hash originalHash,
-				String source) {
-		super(path, normalizedHash, originalHash, startLine, endLine);
-		this.source = source;
+	public File(String path, Hash normalizedHash, Hash originalHash, String code) {
+		super(path, normalizedHash, originalHash);
+
+		this.code = code;
 	}
 }

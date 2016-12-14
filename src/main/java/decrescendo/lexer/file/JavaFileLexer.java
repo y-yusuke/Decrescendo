@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
@@ -26,41 +27,41 @@ public class JavaFileLexer implements FileLexer {
 	@Override
 	public HashSet<File> getFileSet(String path) throws Exception {
 		Path target = Paths.get(path);
+
 		return Files.walk(target)
 				.parallel()
-				.filter(e -> e.toFile()
-						.isFile())
-				.filter(e -> e.getFileName().toString()
-						.endsWith(".java")).map(this::getFileInfo)
+				.filter(e -> e.toFile().isFile())
+				.filter(e -> e.getFileName().toString().endsWith(".java"))
+				.map(this::getFileObject)
 				.filter(e -> e != null)
 				.collect(Collectors.toCollection(HashSet::new));
 	}
 
 	@Override
-	public File getFileInfo(Path path) {
+	public File getFileObject(Path path) {
 		try {
-			String source = getJavaFileSourceCode(path);
-			Scanner scanner = new Scanner();
-			if (source == null) {
+			String code = getJavaFileCode(path);
+			if (code == null) {
 				System.err.println("Cannot read this file: " + path.toString());
 				System.err.println();
 				return null;
 			}
-			scanner.setSource(source.toCharArray());
+
+
+			Scanner scanner = new Scanner();
+			scanner.setSource(getTrimmedCode(code).toCharArray());
 			scanner.recordLineSeparator = true;
 			scanner.sourceLevel = ClassFileConstants.JDK1_8;
 
 			StringBuilder originalSb = new StringBuilder();
 			StringBuilder normalizedSb = new StringBuilder();
 
-			int endLine;
 			int tokenSize = 0;
 
 			label:
 			while (true) {
 				switch (scanner.getNextToken()) {
 					case TokenNameEOF:
-						endLine = scanner.getLineNumber(scanner.getCurrentTokenStartPosition());
 						break label;
 
 					case TokenNameNotAToken:
@@ -115,11 +116,7 @@ public class JavaFileLexer implements FileLexer {
 			}
 
 			if (tokenSize >= Config.fMinTokens) {
-				File file = new File(path.toString(), 1, endLine,
-						new Hash(HashCreator.getHash(normalizedSb.toString())),
-						new Hash(HashCreator.getHash(originalSb.toString())),
-						source);
-				return file;
+				return new File(path.toString(), new Hash(HashCreator.getHash(normalizedSb.toString())), new Hash(HashCreator.getHash(originalSb.toString())), code);
 			} else {
 				return null;
 			}
@@ -132,18 +129,26 @@ public class JavaFileLexer implements FileLexer {
 		}
 	}
 
-	private static String getJavaFileSourceCode(Path path) {
-		Charset[] charsets = new Charset[]{StandardCharsets.ISO_8859_1,
+	private static String getJavaFileCode(Path path) {
+		Charset[] charsets = new Charset[]{
+				StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1,
 				StandardCharsets.US_ASCII, StandardCharsets.UTF_16,
 				StandardCharsets.UTF_16BE, StandardCharsets.UTF_16LE,
-				StandardCharsets.UTF_8};
+		};
+
 		for (final Charset c : charsets) {
 			try {
 				return Files.lines(path, c).collect(Collectors.joining("\n"));
-			} catch (final Exception e) {
-				continue;
+			} catch (final Exception ignored) {
 			}
 		}
+
 		return null;
+	}
+
+	private static String getTrimmedCode(String source) {
+		return Arrays.stream(source.split("\n"))
+				.filter(e -> !e.startsWith("import") && !e.startsWith("package") && !e.startsWith("#set") && !e.startsWith("/*import"))
+				.collect(Collectors.joining("\n"));
 	}
 }
