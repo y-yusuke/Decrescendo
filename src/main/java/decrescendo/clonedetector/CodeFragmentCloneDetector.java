@@ -54,9 +54,11 @@ public class CodeFragmentCloneDetector {
 
 		for (int i = 0; i < list.size() - 1; i++) {
 			service = Executors.newFixedThreadPool(threadsNum);
+
 			for (int j = i + 1; j < list.size(); j++) {
 				service.execute(new SmithWaterman(list.get(i), list.get(j)));
 			}
+
 			service.shutdown();
 			while (!service.isTerminated()) {
 				try {
@@ -102,7 +104,7 @@ public class CodeFragmentCloneDetector {
 			for (CodeFragmentClonePair clonePair : cfClonePairList) {
 				outputCodeFragmentClonePair(clonePair, cloneSetId);
 				if (Config.file || Config.method) {
-					searchCodeFragmentCloneInRepresentativeFileAndMethod(clonePair, cloneSetId);
+					searchCodeFragmentInRepresentativeFileAndMethod(clonePair, cloneSetId);
 				}
 			}
 		}
@@ -129,7 +131,7 @@ public class CodeFragmentCloneDetector {
 
 		DataAccessObject.insertCodeFragmentClonePairInfo(cf1, cloneRange1, cf2, cloneRange2, type, clonePairId, cloneSetId);
 
-		if (clonePairId % 1000 == 0) {
+		if (clonePairId % 10000 == 0) {
 			DBManager.insertCodeFragmentCloneInfo_storage.executeBatch();
 		}
 		clonePairId++;
@@ -184,7 +186,7 @@ public class CodeFragmentCloneDetector {
 		return 1;
 	}
 
-	private void searchCodeFragmentCloneInRepresentativeFileAndMethod(CodeFragmentClonePair cfClonePair, int cloneSetId) throws SQLException {
+	private void searchCodeFragmentInRepresentativeFileAndMethod(CodeFragmentClonePair cfClonePair, int cloneSetId) throws SQLException {
 		CodeFragment cf1 = cfClonePair.clone1;
 		List<Integer> cloneIndexes1 = cfClonePair.cloneIndexes1;
 		List<Integer> gapIndexes1 = cfClonePair.gapIndexes1;
@@ -200,49 +202,52 @@ public class CodeFragmentCloneDetector {
 
 
 		if (cf1.representative == 1 && Config.file) {
-			otherFile1 = searchCodeFragmentCloneInRepresentativeFile(cf1);
+			otherFile1 = searchCodeFragmentInRepresentativeFile(cf1);
 		} else if (cf1.representative == 2 && Config.method) {
-			otherMethod1 = searchCodeFragmentCloneInRepresentativeMethod(cf1);
+			otherMethod1 = searchCodeFragmentInRepresentativeMethod(cf1);
 		} else if (cf1.representative == 3 && Config.file && Config.method) {
-			otherFile1 = searchCodeFragmentCloneInRepresentativeFile(cf1);
-			otherMethod1 = searchCodeFragmentCloneInRepresentativeMethod(cf1);
+			otherFile1 = searchCodeFragmentInRepresentativeFile(cf1);
+			otherMethod1 = searchCodeFragmentInRepresentativeMethod(cf1);
 		}
 
 		otherFile1.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId));
 		otherMethod1.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes1, gapIndexes1, cf2, cloneIndexes2, gapIndexes2, cloneSetId));
 
+
 		if (cf2.representative == 1 && Config.file) {
-			otherFile2 = searchCodeFragmentCloneInRepresentativeFile(cf2);
+			otherFile2 = searchCodeFragmentInRepresentativeFile(cf2);
 		} else if (cf2.representative == 2 && Config.method) {
-			otherMethod2 = searchCodeFragmentCloneInRepresentativeMethod(cf2);
+			otherMethod2 = searchCodeFragmentInRepresentativeMethod(cf2);
 		} else if (cf2.representative == 3 && Config.file && Config.method) {
-			otherFile2 = searchCodeFragmentCloneInRepresentativeFile(cf2);
-			otherMethod2 = searchCodeFragmentCloneInRepresentativeMethod(cf2);
+			otherFile2 = searchCodeFragmentInRepresentativeFile(cf2);
+			otherMethod2 = searchCodeFragmentInRepresentativeMethod(cf2);
 		}
 
 		otherFile2.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId));
 		otherMethod2.forEach(e -> insertCodeFragmentCloneInRepresentative(e, cloneIndexes2, gapIndexes2, cf1, cloneIndexes1, gapIndexes1, cloneSetId));
 
+
 		List<CodeFragment> finalOtherFile = otherFile2;
 		List<CodeFragment> finalOtherMethod = otherMethod2;
-		otherFile1.forEach(e1 -> {
-			finalOtherFile.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
-			finalOtherMethod.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
-		});
-		otherMethod1.forEach(e1 -> {
-			finalOtherFile.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
-			finalOtherMethod.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
-		});
+
+		if (otherFile1.size() != 0) {
+			otherFile1.forEach(e1 -> {
+				finalOtherFile.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+				finalOtherMethod.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+			});
+		}
+
+		if (otherMethod1.size() != 0) {
+			otherMethod1.forEach(e1 -> {
+				finalOtherFile.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+				finalOtherMethod.forEach(e2 -> insertCodeFragmentCloneInRepresentative(e1, cloneIndexes1, gapIndexes1, e2, cloneIndexes2, gapIndexes2, cloneSetId));
+			});
+		}
 	}
 
-	private List<CodeFragment> searchCodeFragmentCloneInRepresentativeFile(CodeFragment cf) throws SQLException {
-		DBManager.selectFileClonePath2.setString(1, cf.path);
+	private List<CodeFragment> searchCodeFragmentInRepresentativeFile(CodeFragment cf) throws SQLException {
+
 		List<CodeFragment> others = new ArrayList<>();
-		try (ResultSet results = DBManager.selectFileClonePath2.executeQuery()) {
-			while (results.next()) {
-				others.add(getOther(results.getString(1), cf.order, cf.name));
-			}
-		}
 
 		DBManager.selectFileClonePath1.setString(1, cf.path);
 		try (ResultSet results = DBManager.selectFileClonePath1.executeQuery()) {
@@ -251,22 +256,36 @@ public class CodeFragmentCloneDetector {
 			}
 		}
 
+
+		DBManager.selectFileClonePath2.setString(1, cf.path);
+
+		try (ResultSet results = DBManager.selectFileClonePath2.executeQuery()) {
+			while (results.next()) {
+				others.add(getOther(results.getString(1), cf.order, cf.name));
+			}
+		}
+
 		return others;
 	}
 
-	private List<CodeFragment> searchCodeFragmentCloneInRepresentativeMethod(CodeFragment cf) throws SQLException {
-		DBManager.selectMethodClonePath2.setString(1, cf.path);
-		DBManager.selectMethodClonePath2.setInt(2, cf.order);
+	private List<CodeFragment> searchCodeFragmentInRepresentativeMethod(CodeFragment cf) throws SQLException {
+
 		List<CodeFragment> others = new ArrayList<>();
-		try (ResultSet results = DBManager.selectMethodClonePath2.executeQuery()) {
+
+		DBManager.selectMethodClonePath1.setString(1, cf.path);
+		DBManager.selectMethodClonePath1.setInt(2, cf.order);
+
+		try (ResultSet results = DBManager.selectMethodClonePath1.executeQuery()) {
 			while (results.next()) {
 				others.add(getOther(results.getString(1), results.getInt(2), results.getString(3)));
 			}
 		}
 
-		DBManager.selectMethodClonePath1.setString(1, cf.path);
-		DBManager.selectMethodClonePath1.setInt(2, cf.order);
-		try (ResultSet results = DBManager.selectMethodClonePath1.executeQuery()) {
+
+		DBManager.selectMethodClonePath2.setString(1, cf.path);
+		DBManager.selectMethodClonePath2.setInt(2, cf.order);
+
+		try (ResultSet results = DBManager.selectMethodClonePath2.executeQuery()) {
 			while (results.next()) {
 				others.add(getOther(results.getString(1), results.getInt(2), results.getString(3)));
 			}

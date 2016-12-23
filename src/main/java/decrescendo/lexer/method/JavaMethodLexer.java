@@ -95,6 +95,11 @@ public class JavaMethodLexer implements MethodLexer {
 							case TokenNamevolatile:
 								break;
 
+
+							case TokenNameAT:
+								scanner.getNextToken();
+								break;
+
 							case TokenNameLBRACE:
 							case TokenNameRBRACE:
 							case TokenNameSEMICOLON:
@@ -102,6 +107,95 @@ public class JavaMethodLexer implements MethodLexer {
 								normalizedTokens.add(scanner.getCurrentTokenString());
 								originalTokens.add(scanner.getCurrentTokenString());
 								lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+								break;
+
+							case TokenNamefor:
+							case TokenNameif:
+							case TokenNamewhile:
+								normalizedSb.append(scanner.getCurrentTokenString());
+								originalSb.append(scanner.getCurrentTokenString());
+								normalizedTokens.add(scanner.getCurrentTokenString());
+								originalTokens.add(scanner.getCurrentTokenString());
+								lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+
+								int count = 0;
+
+								label2:
+								while (true) {
+									switch (scanner.getNextToken()) {
+										case TokenNameNotAToken:
+										case TokenNameWHITESPACE:
+										case TokenNameCOMMENT_LINE:
+										case TokenNameCOMMENT_BLOCK:
+										case TokenNameCOMMENT_JAVADOC:
+											break;
+
+										case TokenNameabstract:
+										case TokenNamefinal:
+										case TokenNamepublic:
+										case TokenNameprivate:
+										case TokenNameprotected:
+										case TokenNamestatic:
+										case TokenNamenative:
+										case TokenNamesynchronized:
+										case TokenNametransient:
+										case TokenNamevolatile:
+											break;
+
+										case TokenNameLBRACE:
+										case TokenNameRBRACE:
+										case TokenNameSEMICOLON:
+											normalizedTokens.add(scanner.getCurrentTokenString());
+											originalTokens.add(scanner.getCurrentTokenString());
+											lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+											break;
+
+										case TokenNameLPAREN:
+											normalizedSb.append(scanner.getCurrentTokenString());
+											originalSb.append(scanner.getCurrentTokenString());
+											normalizedTokens.add(scanner.getCurrentTokenString());
+											originalTokens.add(scanner.getCurrentTokenString());
+											lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+
+											count++;
+											break;
+
+										case TokenNameRPAREN:
+											normalizedSb.append(scanner.getCurrentTokenString());
+											originalSb.append(scanner.getCurrentTokenString());
+											normalizedTokens.add(scanner.getCurrentTokenString());
+											originalTokens.add(scanner.getCurrentTokenString());
+											lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+
+											if (count == 1) {
+												break label2;
+											} else {
+												count--;
+												break;
+											}
+
+										case TokenNameIdentifier:
+										case TokenNameIntegerLiteral:
+										case TokenNameLongLiteral:
+										case TokenNameFloatingPointLiteral:
+										case TokenNameDoubleLiteral:
+										case TokenNameCharacterLiteral:
+										case TokenNameStringLiteral:
+											normalizedSb.append("$");
+											originalSb.append(scanner.getCurrentTokenString());
+											normalizedTokens.add("$");
+											originalTokens.add(scanner.getCurrentTokenString());
+											lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+											break;
+
+										default:
+											normalizedSb.append(scanner.getCurrentTokenString());
+											originalSb.append(scanner.getCurrentTokenString());
+											normalizedTokens.add(scanner.getCurrentTokenString());
+											originalTokens.add(scanner.getCurrentTokenString());
+											lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
+									}
+								}
 								break;
 
 							case TokenNameIdentifier:
@@ -156,23 +250,24 @@ public class JavaMethodLexer implements MethodLexer {
 		}
 	}
 
-	private String getJavaMethodCode(String source, int startLine, int endLine) {
-		StringBuilder methodSource = new StringBuilder();
-		String[] strs = source.split("\n");
+	private String getJavaMethodCode(String code, int startLine, int endLine) {
+		StringBuilder methodCode = new StringBuilder();
+		String[] strs = code.split("\n");
+
 		for (int i = startLine; i < endLine; i++) {
-			methodSource.append(strs[i - 1]);
-			methodSource.append("\n");
+			methodCode.append(strs[i - 1]);
+			methodCode.append("\n");
 		}
 
 		int lastIndexBrace = strs[endLine - 1].lastIndexOf("}");
 		int lastIndexSemicolon = strs[endLine - 1].lastIndexOf(";");
 
 		if (lastIndexBrace > lastIndexSemicolon) {
-			methodSource.append(strs[endLine - 1].substring(0, lastIndexBrace + 1));
+			methodCode.append(strs[endLine - 1].substring(0, lastIndexBrace + 1));
 		} else {
-			methodSource.append(strs[endLine - 1].substring(0, lastIndexSemicolon + 1));
+			methodCode.append(strs[endLine - 1].substring(0, lastIndexSemicolon + 1));
 		}
 
-		return methodSource.toString();
+		return methodCode.toString();
 	}
 }

@@ -87,8 +87,7 @@ public class MethodCloneDetector {
 				.collect(Collectors.toList());
 	}
 
-	private void outputMethodCloneResult(List<List<Method>> methodCloneSets, HashSet<Method> methodSet)
-			throws SQLException, IOException {
+	private void outputMethodCloneResult(List<List<Method>> methodCloneSets, HashSet<Method> methodSet) throws SQLException, IOException {
 		for (int cloneSetId = 0; cloneSetId < methodCloneSets.size(); cloneSetId++) {
 			List<Method> methodCloneSet = methodCloneSets.get(cloneSetId);
 
@@ -99,18 +98,30 @@ public class MethodCloneDetector {
 					Method methodClone2 = methodCloneSet.get(q);
 
 					DataAccessObject.insertMethodClonePairInfo(methodClone1, methodClone2, clonePairId, cloneSetId);
-
-					if (clonePairId % 1000 == 0)
-						DBManager.insertMethodCloneInfo_memory.executeBatch();
-
 					clonePairId++;
 
-					if (Config.file) {
-						if (methodClone1.representative != 0)
-							searchMethodCloneInRepresentativeFile(methodClone1, methodClone2, cloneSetId);
+					if (clonePairId % 10000 == 0) {
+						DBManager.insertMethodCloneInfo_memory.executeBatch();
+					}
 
-						if (methodClone2.representative != 0)
-							searchMethodCloneInRepresentativeFile(methodClone2, methodClone1, cloneSetId);
+					if (Config.file) {
+						List<Method> otherFile1 = new ArrayList<>();
+						List<Method> otherFile2 = new ArrayList<>();
+						int finalCloneSetId = cloneSetId;
+
+						if (methodClone1.representative != 0) {
+							otherFile1 = searchMethodInRepresentativeFile(methodClone1);
+							otherFile1.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, finalCloneSetId));
+						}
+
+						if (methodClone2.representative != 0) {
+							otherFile2 = searchMethodInRepresentativeFile(methodClone2);
+							otherFile2.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone1, finalCloneSetId));
+						}
+
+						List<Method> finalOtherFile = otherFile2;
+						otherFile1.forEach(e1 -> finalOtherFile.forEach(e2 -> insertMethodCloneInRepresentativeFile(e1, e2, finalCloneSetId)));
+
 					}
 
 					if (p == 0) {
@@ -129,10 +140,13 @@ public class MethodCloneDetector {
 				// 3 ... representative file and method
 				Method tmpMethod = methodCloneSet.get(0);
 				methodSet.remove(tmpMethod);
-				if (tmpMethod.representative == 0)
+
+				if (tmpMethod.representative == 0) {
 					tmpMethod.representative = 2;
-				if (tmpMethod.representative == 1)
+				} else if (tmpMethod.representative == 1) {
 					tmpMethod.representative = 3;
+				}
+
 				methodSet.add(tmpMethod);
 			}
 		}
@@ -146,30 +160,32 @@ public class MethodCloneDetector {
 		DBManager.insertDeletedSentenceInfo.executeBatch();
 	}
 
-	private void searchMethodCloneInRepresentativeFile(Method methodClone1, Method methodClone2, int cloneSetId)
-			throws SQLException, IOException {
-		List<Method> otherFile1;
-		List<Method> otherFile2;
+	private List<Method> searchMethodInRepresentativeFile(Method methodClone) throws SQLException, IOException {
+		List<Method> otherFile = new ArrayList<>();
 
-		DBManager.selectFileClonePath2.setString(1, methodClone1.path);
-
-		try (ResultSet results = DBManager.selectFileClonePath2.executeQuery()) {
-			otherFile1 = getOther(results, methodClone1.order);
-			otherFile1.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, cloneSetId));
-		}
-
-		DBManager.selectFileClonePath1.setString(1, methodClone1.path);
+		DBManager.selectFileClonePath1.setString(1, methodClone.path);
 
 		try (ResultSet results = DBManager.selectFileClonePath1.executeQuery()) {
-			otherFile2 = getOther(results, methodClone1.order);
-			otherFile2.forEach(e -> insertMethodCloneInRepresentativeFile(e, methodClone2, cloneSetId));
+			List<Method> otherFile1 = getOther(results, methodClone.order);
+			if (otherFile1 != null) {
+				otherFile.addAll(otherFile1);
+			}
 		}
 
-		otherFile1.forEach(e1 -> otherFile2.forEach(e2 -> insertMethodCloneInRepresentativeFile(e1, e2, cloneSetId)));
+
+		DBManager.selectFileClonePath2.setString(1, methodClone.path);
+
+		try (ResultSet results = DBManager.selectFileClonePath2.executeQuery()) {
+			List<Method> otherFile2 = getOther(results, methodClone.order);
+			if (otherFile2 != null) {
+				otherFile.addAll(otherFile2);
+			}
+		}
+
+		return otherFile;
 	}
 
-	private List<Method> getOther(ResultSet results, int order)
-			throws SQLException {
+	private List<Method> getOther(ResultSet results, int order) throws SQLException {
 		List<Method> otherFile = new ArrayList<>();
 
 		while (results.next()) {
@@ -183,6 +199,7 @@ public class MethodCloneDetector {
 				}
 			}
 		}
+
 		return otherFile;
 	}
 
