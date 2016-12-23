@@ -6,7 +6,6 @@ import decrescendo.config.Config;
 import decrescendo.granularity.CodeFragment;
 import decrescendo.hash.Hash;
 import decrescendo.hash.HashList;
-import org.apache.lucene.search.spell.LevensteinDistance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,38 +36,11 @@ public class SmithWaterman implements Runnable {
 	}
 
 	public void run() {
-		boolean flag = true;
-		if (Config.simpleMode) {
-			flag = isTarget();
-		}
-		if (flag) {
-			initialMatrix();
-			calculateScore();
-			//printMatrix();
-			traceBack();
-			matrix = null;
-		}
-	}
-
-	private boolean isTarget() {
-		LevensteinDistance levensteinAlgorithm = new LevensteinDistance();
-
-		double methodNameSimilarity = levensteinAlgorithm.getDistance(target1.name, target2.name);
-		if (methodNameSimilarity >= 0.3) {
-			return true;
-		}
-
-/*		String[] splitPath1 = target1.path.split("\\\\");
-		String className1 = splitPath1[splitPath1.length - 1].replaceAll("\\.java", "");
-		String[] splitPath2 = target2.path.split("\\\\");
-		String className2 = splitPath2[splitPath2.length - 1].replaceAll("\\.java", "");
-
-		double classNameSimilarity = levensteinAlgorithm.getDistance(className1, className2);
-		if (classNameSimilarity >= 0.7) {
-			return true;
-		}*/
-
-		return false;
+		initialMatrix();
+		calculateScore();
+		//printMatrix();
+		traceBack();
+		matrix = null;
 	}
 
 	private void initialMatrix() {

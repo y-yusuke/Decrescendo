@@ -11,6 +11,5 @@ dependencies {
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.eclipse.jdt:org.eclipse.jdt.core:3.10.0'
     compile 'org.xerial:sqlite-jdbc:3.8.11.2'
-    compile 'org.apache.lucene:lucene-spellchecker:3.6.2'
     testCompile 'junit:junit:4.12'
 }
