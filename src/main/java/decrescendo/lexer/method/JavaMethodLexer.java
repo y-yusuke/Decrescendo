@@ -6,16 +6,14 @@ import decrescendo.granularity.Method;
 import decrescendo.hash.Hash;
 import decrescendo.hash.HashCreator;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.parser.Scanner;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
@@ -41,6 +39,11 @@ public class JavaMethodLexer implements MethodLexer {
 		final ASTParser parser = ASTParser.newParser(AST.JLS8);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		parser.setSource(code.toCharArray());
+
+		final Map<String, String> options = JavaCore.getOptions();
+		JavaCore.setComplianceOptions(JavaCore.VERSION_1_8, options);
+		parser.setCompilerOptions(options);
+
 		final CompilationUnit unit = (CompilationUnit) parser.createAST(new NullProgressMonitor());
 
 		unit.accept(new ASTVisitor() {
@@ -94,7 +97,6 @@ public class JavaMethodLexer implements MethodLexer {
 							case TokenNametransient:
 							case TokenNamevolatile:
 								break;
-
 
 							case TokenNameAT:
 								scanner.getNextToken();
