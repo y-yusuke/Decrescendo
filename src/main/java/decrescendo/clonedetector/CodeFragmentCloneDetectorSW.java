@@ -1,7 +1,7 @@
 package decrescendo.clonedetector;
 
-import decrescendo.codefragmentclone.CloneRange;
-import decrescendo.codefragmentclone.CodeFragmentClonePair;
+import decrescendo.codefragmentclonesw.CloneRange;
+import decrescendo.codefragmentclonesw.CodeFragmentClonePairSW;
 import decrescendo.config.Config;
 import decrescendo.db.DBManager;
 import decrescendo.db.DataAccessObject;
@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 
 import static java.util.Collections.synchronizedList;
 
-public class CodeFragmentCloneDetector {
+public class CodeFragmentCloneDetectorSW {
 	private static int clonePairId;
-	public static List<CodeFragmentClonePair> cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePair>());
+	public static List<CodeFragmentClonePairSW> cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePairSW>());
 
-	public CodeFragmentCloneDetector() {
+	public CodeFragmentCloneDetectorSW() {
 		clonePairId = 0;
 	}
 
@@ -77,7 +77,7 @@ public class CodeFragmentCloneDetector {
 		System.out.println("Outputting Code Fragment Clone Result...");
 		start = System.currentTimeMillis();
 
-		List<List<CodeFragmentClonePair>> cfCloneSets = getCodeFragmentCloneSets(cfClonePairList);
+		List<List<CodeFragmentClonePairSW>> cfCloneSets = getCodeFragmentCloneSets(cfClonePairList);
 		outputCodeFragmentCloneResult(cfCloneSets);
 
 		stop = System.currentTimeMillis();
@@ -87,21 +87,21 @@ public class CodeFragmentCloneDetector {
 		System.out.println("Detected " + clonePairId + " Code Fragment Clone Pair\n");
 	}
 
-	private List<List<CodeFragmentClonePair>> getCodeFragmentCloneSets(List<CodeFragmentClonePair> cfClonePairList) {
+	private List<List<CodeFragmentClonePairSW>> getCodeFragmentCloneSets(List<CodeFragmentClonePairSW> cfClonePairList) {
 		return cfClonePairList.stream()
 				.parallel()
-				.collect(Collectors.groupingBy(CodeFragmentClonePair::getCommonHash, Collectors.toList()))
+				.collect(Collectors.groupingBy(CodeFragmentClonePairSW::getCommonHash, Collectors.toList()))
 				.values()
 				.stream()
 				.parallel()
 				.collect(Collectors.toList());
 	}
 
-	private void outputCodeFragmentCloneResult(List<List<CodeFragmentClonePair>> cfCloneSets) throws SQLException {
+	private void outputCodeFragmentCloneResult(List<List<CodeFragmentClonePairSW>> cfCloneSets) throws SQLException {
 		for (int cloneSetId = 0; cloneSetId < cfCloneSets.size(); cloneSetId++) {
-			List<CodeFragmentClonePair> cfClonePairList = cfCloneSets.get(cloneSetId);
+			List<CodeFragmentClonePairSW> cfClonePairList = cfCloneSets.get(cloneSetId);
 
-			for (CodeFragmentClonePair clonePair : cfClonePairList) {
+			for (CodeFragmentClonePairSW clonePair : cfClonePairList) {
 				outputCodeFragmentClonePair(clonePair, cloneSetId);
 				if (Config.file || Config.method) {
 					searchCodeFragmentInRepresentativeFileAndMethod(clonePair, cloneSetId);
@@ -111,7 +111,7 @@ public class CodeFragmentCloneDetector {
 		DBManager.insertCodeFragmentCloneInfo_storage.executeBatch();
 	}
 
-	private void outputCodeFragmentClonePair(CodeFragmentClonePair clonePair, int cloneSetId) throws SQLException {
+	private void outputCodeFragmentClonePair(CodeFragmentClonePairSW clonePair, int cloneSetId) throws SQLException {
 		CodeFragment cf1 = clonePair.clone1;
 		List<Integer> cloneIndexes1 = clonePair.cloneIndexes1;
 		List<Integer> gapIndexes1 = clonePair.gapIndexes1;
@@ -129,7 +129,7 @@ public class CodeFragmentCloneDetector {
 			type = getCloneType(cf1.originalSentences, cf2.originalSentences, cloneIndexes1, cloneIndexes2);
 		}
 
-		DataAccessObject.insertCodeFragmentClonePairInfo(cf1, cloneRange1, cf2, cloneRange2, type, clonePairId, cloneSetId);
+		DataAccessObject.insertCodeFragmentClonePairInfoSW(cf1, cloneRange1, cf2, cloneRange2, type, clonePairId, cloneSetId);
 
 		if (clonePairId % 10000 == 0) {
 			DBManager.insertCodeFragmentCloneInfo_storage.executeBatch();
@@ -186,7 +186,7 @@ public class CodeFragmentCloneDetector {
 		return 1;
 	}
 
-	private void searchCodeFragmentInRepresentativeFileAndMethod(CodeFragmentClonePair cfClonePair, int cloneSetId) throws SQLException {
+	private void searchCodeFragmentInRepresentativeFileAndMethod(CodeFragmentClonePairSW cfClonePair, int cloneSetId) throws SQLException {
 		CodeFragment cf1 = cfClonePair.clone1;
 		List<Integer> cloneIndexes1 = cfClonePair.cloneIndexes1;
 		List<Integer> gapIndexes1 = cfClonePair.gapIndexes1;
@@ -320,7 +320,7 @@ public class CodeFragmentCloneDetector {
 
 	private void insertCodeFragmentCloneInRepresentative(CodeFragment cf1, List<Integer> cloneIndexes1, List<Integer> gapIndexes1, CodeFragment cf2, List<Integer> cloneIndexes2, List<Integer> gapIndexes2, int cloneSetId) {
 
-		CodeFragmentClonePair cfClonePair = new CodeFragmentClonePair(cf1, cf2, null, cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
+		CodeFragmentClonePairSW cfClonePair = new CodeFragmentClonePairSW(cf1, cf2, null, cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
 
 		try {
 			outputCodeFragmentClonePair(cfClonePair, cloneSetId);

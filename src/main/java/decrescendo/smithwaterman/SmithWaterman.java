@@ -1,7 +1,7 @@
 package decrescendo.smithwaterman;
 
-import decrescendo.clonedetector.CodeFragmentCloneDetector;
-import decrescendo.codefragmentclone.CodeFragmentClonePair;
+import decrescendo.clonedetector.CodeFragmentCloneDetectorSW;
+import decrescendo.codefragmentclonesw.CodeFragmentClonePairSW;
 import decrescendo.config.Config;
 import decrescendo.granularity.CodeFragment;
 import decrescendo.hash.Hash;
@@ -73,17 +73,17 @@ public class SmithWaterman implements Runnable {
 		for (int i = one.size() - 1; i > 0; i--) {
 			for (int j = two.size() - 1; j > 0; j--) {
 				if (!matrix[i][j].isChecked() && matrix[i][j].isMatch()) {
-					CodeFragmentClonePair cfClonePair = startTraceBack(i, j);
+					CodeFragmentClonePairSW cfClonePair = startTraceBack(i, j);
 
 					if (cfClonePair != null) {
-						CodeFragmentCloneDetector.cfClonePairList.add(cfClonePair);
+						CodeFragmentCloneDetectorSW.cfClonePairList.add(cfClonePair);
 					}
 				}
 			}
 		}
 	}
 
-	private CodeFragmentClonePair startTraceBack(int i, int j) {
+	private CodeFragmentClonePairSW startTraceBack(int i, int j) {
 		List<Hash> commonHashList = new ArrayList<>();
 		List<Integer> cloneIndexes1 = new ArrayList<>();
 		List<Integer> cloneIndexes2 = new ArrayList<>();
@@ -136,7 +136,7 @@ public class SmithWaterman implements Runnable {
 		}
 
 		if (checkClone(cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2)) {
-			return new CodeFragmentClonePair(target1, target2, new HashList(commonHashList), cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
+			return new CodeFragmentClonePairSW(target1, target2, new HashList(commonHashList), cloneIndexes1, cloneIndexes2, gapIndexes1, gapIndexes2);
 		} else {
 			return null;
 		}

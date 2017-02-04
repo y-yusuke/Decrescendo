@@ -1,6 +1,6 @@
 package decrescendo.db;
 
-import decrescendo.codefragmentclone.CloneRange;
+import decrescendo.codefragmentclonesw.CloneRange;
 import decrescendo.granularity.CodeFragment;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
@@ -56,7 +56,7 @@ public class DataAccessObject {
 		}
 	}
 
-	public static void insertCodeFragmentClonePairInfo(
+	public static void insertCodeFragmentClonePairInfoSW(
 			CodeFragment cf1, CloneRange cloneRange1, CodeFragment cf2, CloneRange cloneRange2, int type, int clonePairId, int cloneSetId) {
 		try {
 			DBManager.insertCodeFragmentCloneInfo_storage.setInt(1, clonePairId);
@@ -72,6 +72,30 @@ public class DataAccessObject {
 			DBManager.insertCodeFragmentCloneInfo_storage.setInt(11, cloneRange2.startLine);
 			DBManager.insertCodeFragmentCloneInfo_storage.setInt(12, cloneRange2.endLine);
 			DBManager.insertCodeFragmentCloneInfo_storage.setString(13, cloneRange2.gapLines);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(14, cloneSetId);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(15, type);
+			DBManager.insertCodeFragmentCloneInfo_storage.addBatch();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void insertCodeFragmentClonePairInfoST(
+			Method clone1, Method clone2, int startLine1, int endLine1, int startLine2, int endLine2, int type, int clonePairId, int cloneSetId) {
+		try {
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(1, clonePairId);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(2, clone1.path);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(3, clone1.name);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(4, clone1.order);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(5, startLine1);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(6, endLine1);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(7, "");
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(8, clone2.path);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(9, clone2.name);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(10, clone2.order);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(11, startLine2);
+			DBManager.insertCodeFragmentCloneInfo_storage.setInt(12, endLine2);
+			DBManager.insertCodeFragmentCloneInfo_storage.setString(13, "");
 			DBManager.insertCodeFragmentCloneInfo_storage.setInt(14, cloneSetId);
 			DBManager.insertCodeFragmentCloneInfo_storage.setInt(15, type);
 			DBManager.insertCodeFragmentCloneInfo_storage.addBatch();
@@ -115,6 +139,27 @@ public class DataAccessObject {
 				DBManager.insertDeletedSentenceInfo.setBytes(7, originalSentence.hash);
 				DBManager.insertDeletedSentenceInfo.setBytes(8, normalizedSentence.hash);
 				DBManager.insertDeletedSentenceInfo.addBatch();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+
+	public static void insertDeletedTokenInfo(Method e) {
+		for (int i = 0; i < e.normalizedTokens.size(); i++) {
+			String normalizedToken = e.normalizedTokens.get(i);
+			String originalToken = e.originalTokens.get(i);
+			int lineNumber = e.lineNumberPerToken.get(i);
+
+			try {
+				DBManager.insertDeletedTokenInfo.setString(1, e.path);
+				DBManager.insertDeletedTokenInfo.setString(2, e.name);
+				DBManager.insertDeletedTokenInfo.setInt(3, e.order);
+				DBManager.insertDeletedTokenInfo.setInt(4, i);
+				DBManager.insertDeletedTokenInfo.setInt(5, lineNumber);
+				DBManager.insertDeletedTokenInfo.setString(6, originalToken);
+				DBManager.insertDeletedTokenInfo.setString(7, normalizedToken);
+				DBManager.insertDeletedTokenInfo.addBatch();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}

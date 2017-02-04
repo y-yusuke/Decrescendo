@@ -155,9 +155,14 @@ public class MethodCloneDetector {
 	}
 
 	private void insertDeleteMethodInfo(Method method) throws SQLException {
-		CodeFragment codeFragment = SentenceLexer.separateSentences(method);
-		DataAccessObject.insertDeletedSentenceInfo(codeFragment);
-		DBManager.insertDeletedSentenceInfo.executeBatch();
+		if (Config.smithWaterman) {
+			CodeFragment codeFragment = SentenceLexer.separateSentences(method);
+			DataAccessObject.insertDeletedSentenceInfo(codeFragment);
+			DBManager.insertDeletedSentenceInfo.executeBatch();
+		} else if (Config.suffix) {
+			DataAccessObject.insertDeletedTokenInfo(method);
+			DBManager.insertDeletedTokenInfo.executeBatch();
+		}
 	}
 
 	private List<Method> searchMethodInRepresentativeFile(Method methodClone) throws SQLException, IOException {

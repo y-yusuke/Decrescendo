@@ -1,4 +1,4 @@
-package decrescendo.codefragmentclone;
+package decrescendo.codefragmentclonesw;
 
 public class CloneRange {
 	public final int startLine;

@@ -1,11 +1,11 @@
-package decrescendo.codefragmentclone;
+package decrescendo.codefragmentclonesw;
 
 import decrescendo.granularity.CodeFragment;
 import decrescendo.hash.HashList;
 
 import java.util.List;
 
-public class CodeFragmentClonePair {
+public class CodeFragmentClonePairSW {
 	public final CodeFragment clone1;
 	public final CodeFragment clone2;
 	public final HashList commonHash;
@@ -14,9 +14,9 @@ public class CodeFragmentClonePair {
 	public final List<Integer> gapIndexes1;
 	public final List<Integer> gapIndexes2;
 
-	public CodeFragmentClonePair(CodeFragment clone1, CodeFragment clone2, HashList commonHash,
-								 List<Integer> cloneIndexes1, List<Integer> cloneIndexes2,
-								 List<Integer> gapIndexes1, List<Integer> gapIndexes2) {
+	public CodeFragmentClonePairSW(CodeFragment clone1, CodeFragment clone2, HashList commonHash,
+								   List<Integer> cloneIndexes1, List<Integer> cloneIndexes2,
+								   List<Integer> gapIndexes1, List<Integer> gapIndexes2) {
 		this.clone1 = clone1;
 		this.clone2 = clone2;
 		this.commonHash = commonHash;

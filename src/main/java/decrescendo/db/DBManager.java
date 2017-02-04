@@ -19,12 +19,14 @@ public class DBManager {
 
 	public static PreparedStatement insertDeletedMethodInfo;
 	public static PreparedStatement insertDeletedSentenceInfo;
+	public static PreparedStatement insertDeletedTokenInfo;
 	public static PreparedStatement selectFileClonePath1;
 	public static PreparedStatement selectFileClonePath2;
 	public static PreparedStatement selectMethodClonePath1;
 	public static PreparedStatement selectMethodClonePath2;
 	public static PreparedStatement selectDeletedMethods;
 	public static PreparedStatement selectDeletedSentences;
+	public static PreparedStatement selectDeletedTokens;
 
 	public static void dbSetup() throws ClassNotFoundException, SQLException {
 		Class.forName("org.sqlite.JDBC");
@@ -47,6 +49,7 @@ public class DBManager {
 		statement_memory.executeUpdate("DROP TABLE IF EXISTS METHOD_CLONES");
 		statement_memory.executeUpdate("DROP TABLE IF EXISTS DELETE_METHODS");
 		statement_memory.executeUpdate("DROP TABLE IF EXISTS DELETE_SENTENCES");
+		statement_memory.executeUpdate("DROP TABLE IF EXISTS DELETE_TOKENS");
 
 		statement_storage.executeUpdate("DROP TABLE IF EXISTS FILE_CLONES");
 		statement_storage.executeUpdate("DROP TABLE IF EXISTS METHOD_CLONES");
@@ -101,6 +104,16 @@ public class DBManager {
 				+ "NORMALIZED_HASH BLOB)");
 		statement_memory.executeUpdate("CREATE INDEX sPathIndex ON DELETE_SENTENCES(PATH)");
 
+		statement_memory.executeUpdate("CREATE TABLE DELETE_TOKENS("
+				+ "PATH string, "
+				+ "METHOD_NAME string, "
+				+ "METHOD_NUMBER INTEGER, "
+				+ "TOKEN_NUMBER INTEGER, "
+				+ "START_LINE INTEGER, "
+				+ "ORIGINAL_TOKEN string, "
+				+ "NORMALIZED_TOKEN string)");
+		statement_memory.executeUpdate("CREATE INDEX tPathIndex ON DELETE_TOKENS(PATH)");
+
 		statement_storage.executeUpdate("CREATE TABLE FILE_CLONES("
 				+ "ID intege, "
 				+ "PATH1 string, "
@@ -147,6 +160,7 @@ public class DBManager {
 	private static void createPrepareStatement() throws SQLException {
 		insertDeletedMethodInfo = connection_memory.prepareStatement("INSERT INTO DELETE_METHODS VALUES (?, ?, ?, ?, ?, ?, ?)");
 		insertDeletedSentenceInfo = connection_memory.prepareStatement("INSERT INTO DELETE_SENTENCES VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+		insertDeletedTokenInfo = connection_memory.prepareStatement("INSERT INTO DELETE_TOKENS VALUES (?, ?, ?, ?, ?, ?, ?)");
 
 		insertFileCloneInfo_memory = connection_memory.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?)");
 		insertMethodCloneInfo_memory = connection_memory.prepareStatement("INSERT INTO METHOD_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -159,6 +173,7 @@ public class DBManager {
 
 		selectDeletedMethods = connection_memory.prepareStatement("SELECT * FROM DELETE_METHODS WHERE PATH = ? AND METHOD_NUMBER = ?;");
 		selectDeletedSentences = connection_memory.prepareStatement("SELECT * FROM DELETE_SENTENCES WHERE PATH = ? AND METHOD_NUMBER = ?;");
+		selectDeletedTokens = connection_memory.prepareStatement("SELECT * FROM DELETE_TOKENS WHERE PATH = ? AND METHOD_NUMBER = ?;");
 
 		insertFileCloneInfo_storage = connection_storage.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?)");
 		insertMethodCloneInfo_storage = connection_storage.prepareStatement("INSERT INTO METHOD_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -203,6 +218,7 @@ public class DBManager {
 		if (statement_memory != null) statement_memory.close();
 		if (insertDeletedMethodInfo != null) insertDeletedMethodInfo.close();
 		if (insertDeletedSentenceInfo != null) insertDeletedSentenceInfo.close();
+		if (insertDeletedTokenInfo != null) insertDeletedTokenInfo.close();
 		if (insertFileCloneInfo_memory != null) insertFileCloneInfo_memory.close();
 		if (insertMethodCloneInfo_memory != null) insertMethodCloneInfo_memory.close();
 		if (selectFileClonePath2 != null) selectFileClonePath2.close();
@@ -211,6 +227,7 @@ public class DBManager {
 		if (selectMethodClonePath1 != null) selectMethodClonePath1.close();
 		if (selectDeletedMethods != null) selectDeletedMethods.close();
 		if (selectDeletedSentences != null) selectDeletedSentences.close();
+		if (selectDeletedTokens != null) selectDeletedTokens.close();
 		if (connection_memory != null) connection_memory.close();
 
 		connection_storage.commit();

@@ -16,6 +16,8 @@ public class Config {
 	public static int mMinTokens;
 	public static int cfMinTokens;
 	public static double gapRate;
+	public static boolean suffix;
+	public static boolean smithWaterman;
 
 	public static void setConfig() throws IOException {
 		Properties prop = new Properties();
@@ -33,5 +35,7 @@ public class Config {
 		mMinTokens = Integer.parseInt(prop.getProperty("methodMinTokens"));
 		cfMinTokens = Integer.parseInt(prop.getProperty("codeFragmentMinTokens"));
 		gapRate = Double.parseDouble(prop.getProperty("gapRate"));
+		suffix = Boolean.valueOf(prop.getProperty("suffix"));
+		smithWaterman = Boolean.valueOf(prop.getProperty("smithWaterman"));
 	}
 }

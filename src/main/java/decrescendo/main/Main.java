@@ -1,6 +1,7 @@
 package decrescendo.main;
 
-import decrescendo.clonedetector.CodeFragmentCloneDetector;
+import decrescendo.clonedetector.CodeFragmentCloneDetectorST;
+import decrescendo.clonedetector.CodeFragmentCloneDetectorSW;
 import decrescendo.clonedetector.FileCloneDetector;
 import decrescendo.clonedetector.MethodCloneDetector;
 import decrescendo.config.Config;
@@ -36,7 +37,11 @@ public class Main {
 			}
 
 			if (Config.codeFragment) {
-				new CodeFragmentCloneDetector().execute(methods);
+				if (Config.smithWaterman) {
+					new CodeFragmentCloneDetectorSW().execute(methods);
+				} else if (Config.suffix) {
+					new CodeFragmentCloneDetectorST().execute(methods);
+				}
 				System.out.println(getMemoryInfo());
 			}
 

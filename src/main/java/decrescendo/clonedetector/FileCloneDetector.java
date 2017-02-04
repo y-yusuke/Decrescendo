@@ -143,9 +143,14 @@ public class FileCloneDetector {
 		}
 
 		if (methodSet != null && Config.codeFragment) {
-			List<CodeFragment> codeFragmentList = SentenceLexer.getCodeFragmentList(methodSet);
-			codeFragmentList.forEach(DataAccessObject::insertDeletedSentenceInfo);
-			DBManager.insertDeletedSentenceInfo.executeBatch();
+			if (Config.smithWaterman) {
+				List<CodeFragment> codeFragmentList = SentenceLexer.getCodeFragmentList(methodSet);
+				codeFragmentList.forEach(DataAccessObject::insertDeletedSentenceInfo);
+				DBManager.insertDeletedSentenceInfo.executeBatch();
+			} else if (Config.suffix) {
+				methodSet.forEach(DataAccessObject::insertDeletedTokenInfo);
+				DBManager.insertDeletedTokenInfo.executeBatch();
+			}
 		}
 	}
 }
