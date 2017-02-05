@@ -10,26 +10,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExecuteSuffixTree implements Runnable {
-	public int maxLen;
-	private Method method1;
-	private Method method2;
+	private SuffixTree suffixTree;
+	private int maxLen;
+	private final Method method1;
+	private final Method method2;
+	private List<String> a;
+	private List<String> b;
 
 	public ExecuteSuffixTree(Method method1, Method method2) {
 		this.method1 = method1;
 		this.method2 = method2;
+		this.a = new ArrayList<>(method1.normalizedTokens);
+		this.b = new ArrayList<>(method2.normalizedTokens);
 	}
 
 	public void run() {
-		List<String> a = method1.normalizedTokens;
-		List<String> b = method2.normalizedTokens;
+		makeSuffixTree();
+		searchCommonSequence();
+		//printNode(suffixTree.root, a);
+	}
+
+	private void makeSuffixTree() {
 		a.add("$1");
 		b.add("&2");
 		maxLen = a.size();
-		SuffixTree suffixTree = new SuffixTree(a, maxLen);
+		suffixTree = new SuffixTree(a, maxLen);
 		maxLen = b.size();
 		suffixTree.add(b, maxLen);
-		//printNode(suffixTree.root, a);
+	}
 
+	private void searchCommonSequence() {
 		List<String> c = suffixTree.commonString(50);
 
 		List<String> tmp = new ArrayList<>();
@@ -67,7 +77,7 @@ public class ExecuteSuffixTree implements Runnable {
 							index2 = pi1.getIndex();
 							id2 = pi1.getId();
 						} else {
-							if (pi1.getIndex() < pi2.getIndex()) {
+/*							if (pi1.getIndex() < pi2.getIndex()) {
 								index1 = pi1.getIndex();
 								id1 = pi1.getId();
 								index2 = pi2.getIndex();
@@ -77,7 +87,8 @@ public class ExecuteSuffixTree implements Runnable {
 								id1 = pi2.getId();
 								index2 = pi1.getIndex();
 								id2 = pi1.getId();
-							}
+							}*/
+							continue;
 						}
 
 						CloneIndex ci = new CloneIndex(id1, id2, index1, index2, size, new Hash(HashCreator.getHash(sb.toString())));

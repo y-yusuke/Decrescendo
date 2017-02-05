@@ -2,15 +2,15 @@ package decrescendo.suffixtree;
 
 import decrescendo.hash.Hash;
 
-public class CloneIndex {
-	public int id1;
-	public int id2;
-	public int index1;
-	public int index2;
+class CloneIndex {
+	private int id1;
+	private int id2;
+	private int index1;
+	private int index2;
 	public int size;
-	public Hash commonHash;
+	private Hash commonHash;
 
-	public CloneIndex(int id1, int id2, int index1, int index2, int size, Hash commonHash) {
+	CloneIndex(int id1, int id2, int index1, int index2, int size, Hash commonHash) {
 		this.id1 = id1;
 		this.id2 = id2;
 		this.index1 = index1;

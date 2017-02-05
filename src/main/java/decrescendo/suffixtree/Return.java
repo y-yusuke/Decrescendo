@@ -1,12 +1,12 @@
 package decrescendo.suffixtree;
 
 class Return {
-	public final Node prev;
-	public final Node node;
-	public final int nlen;
-	public final int ni;
-	public final int si;
-	public final int bi;
+	private final Node prev;
+	private final Node node;
+	private final int nlen;
+	private final int ni;
+	private final int si;
+	private final int bi;
 
 	Return(Node prev, Node node, int nlen, int ni, int si, int bi) {
 		this.prev = prev;

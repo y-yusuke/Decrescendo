@@ -3,12 +3,12 @@ package decrescendo.suffixtree;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SuffixTree {
-	public List<String> buff;
+class SuffixTree {
+	private List<String> buff;
 	public int size;
-	public final Node root;
-	public int sets;
-	public List<Integer> interval = new ArrayList<>();
+	private final Node root;
+	private int sets;
+	private List<Integer> interval = new ArrayList<>();
 	private int maxLen;
 
 	SuffixTree(List<String> buff, int maxLen) {

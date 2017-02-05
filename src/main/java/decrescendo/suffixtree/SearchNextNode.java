@@ -1,9 +1,9 @@
 package decrescendo.suffixtree;
 
 class SearchNextNode {
-	public final Node prev;
-	public final Node node;
-	public final int match;
+	private final Node prev;
+	private final Node node;
+	private final int match;
 
 	SearchNextNode(Node prev, Node node, int match) {
 		this.prev = prev;

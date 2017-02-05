@@ -1,10 +1,10 @@
 package decrescendo.suffixtree;
 
-public class PatternIndex {
-	public int id;
-	public int index;
+class PatternIndex {
+	private int id;
+	private int index;
 
-	public PatternIndex(int id, int index) {
+	PatternIndex(int id, int index) {
 		this.id = id;
 		this.index = index;
 	}

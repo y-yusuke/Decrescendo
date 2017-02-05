@@ -105,8 +105,8 @@ public class JavaMethodLexer implements MethodLexer {
 							case TokenNameLBRACE:
 							case TokenNameRBRACE:
 							case TokenNameSEMICOLON:
-								separateTokenCount++;
 								if (Config.smithWaterman) {
+									separateTokenCount++;
 									normalizedTokens.add(scanner.getCurrentTokenString());
 									originalTokens.add(scanner.getCurrentTokenString());
 									lineNumberPerToken.add(startLine + scanner.getLineNumber(scanner.getCurrentTokenStartPosition()) - 1);
