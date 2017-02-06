@@ -12,9 +12,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.synchronizedList;
@@ -36,25 +33,7 @@ public class CodeFragmentCloneDetectorST {
 		System.out.println("Detecting Code Fragment Clone...");
 		start = System.currentTimeMillis();
 
-		int threadsNum = Runtime.getRuntime().availableProcessors();
-		ExecutorService service;
-
-		for (int i = 0; i < list.size() - 1; i++) {
-			service = Executors.newFixedThreadPool(threadsNum);
-
-			for (int j = i + 1; j < list.size(); j++) {
-				service.execute(new ExecuteSuffixTree(list.get(i), list.get(j)));
-			}
-
-			service.shutdown();
-			while (!service.isTerminated()) {
-				try {
-					service.awaitTermination(100L, TimeUnit.SECONDS);
-				} catch (InterruptedException e) {
-					System.out.println("Interrupted...");
-				}
-			}
-		}
+		new ExecuteSuffixTree(list).run();
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;

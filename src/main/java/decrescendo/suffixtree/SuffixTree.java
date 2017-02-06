@@ -6,7 +6,7 @@ import java.util.List;
 class SuffixTree {
 	private List<String> buff;
 	public int size;
-	private final Node root;
+	public final Node root;
 	private int sets;
 	private List<Integer> interval = new ArrayList<>();
 	private int maxLen;
@@ -168,6 +168,44 @@ class SuffixTree {
 		this.sets++;
 	}
 
+	public List<String> repeatedSubstring(int n, int m) {
+		List<String> a = new ArrayList<>();
+		searchRepeatedSubstring(this.root, n, m, a);
+		return a;
+	}
+
+	private int searchRepeatedSubstring(Node node, int n, int m, List<String> a) {
+		int c;
+		int l;
+
+		if (node.child == null) {
+			c = 1;
+			l = this.size - node.start;
+		} else {
+			Node x = node.child;
+			c = 0;
+
+			while (x != null) {
+				c += this.searchRepeatedSubstring(x, n, m, a);
+				x = x.bros;
+			}
+
+			l = node.getLength();
+		}
+
+		if (l > 0 && c >= m) {
+			//for (int k = l; l >= 0; k--) {
+			if (node.depth + l >= n) {
+				for (int i = node.start - node.depth; i < node.start + l; i++) {
+					a.add(this.buff.get(i));
+				}
+				a.add("\n");
+			}
+			//}
+		}
+		return c;
+	}
+
 	public List<String> commonString(int n) {
 		List<String> a = new ArrayList<>();
 		searchCommonSubstring(this.root, n, a);
@@ -224,10 +262,24 @@ class SuffixTree {
 		List<PatternIndex> pis = new ArrayList<>();
 
 		for (Node x : node.traverseLeaf()) {
-			pis.add(new PatternIndex(x.id, (x.start - x.depth - this.interval.get(x.id))));
+			if (x.child == null) {
+				pis.add(new PatternIndex(x.id, (x.start - x.depth - this.interval.get(x.id))));
+			} else {
+				getIDs(x, pis);
+			}
 		}
 
 		return pis;
+	}
+
+	private void getIDs(Node node, List<PatternIndex> pis) {
+		for (Node x : node.traverseLeaf()) {
+			if (x.child == null) {
+				pis.add(new PatternIndex(x.id, (x.start - x.depth - this.interval.get(x.id))));
+			} else {
+				getIDs(x, pis);
+			}
+		}
 	}
 
 	private Node searchPatternSub(List<String> seq) {

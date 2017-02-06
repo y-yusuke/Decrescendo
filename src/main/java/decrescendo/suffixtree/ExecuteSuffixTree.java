@@ -9,19 +9,15 @@ import decrescendo.hash.HashCreator;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExecuteSuffixTree implements Runnable {
+public class ExecuteSuffixTree {
 	private SuffixTree suffixTree;
 	private int maxLen;
-	private final Method method1;
-	private final Method method2;
 	private List<String> a;
 	private List<String> b;
+	List<Method> list;
 
-	public ExecuteSuffixTree(Method method1, Method method2) {
-		this.method1 = method1;
-		this.method2 = method2;
-		this.a = new ArrayList<>(method1.normalizedTokens);
-		this.b = new ArrayList<>(method2.normalizedTokens);
+	public ExecuteSuffixTree(List<Method> list) {
+		this.list = list;
 	}
 
 	public void run() {
@@ -31,16 +27,22 @@ public class ExecuteSuffixTree implements Runnable {
 	}
 
 	private void makeSuffixTree() {
-		a.add("$1");
-		b.add("&2");
+		Method method = list.get(0);
+		this.a = new ArrayList<>(method.normalizedTokens);
+		a.add("$" + 0);
 		maxLen = a.size();
 		suffixTree = new SuffixTree(a, maxLen);
-		maxLen = b.size();
-		suffixTree.add(b, maxLen);
+		for (int i = 1; i < list.size(); i++) {
+			method = list.get(i);
+			b = new ArrayList<>(method.normalizedTokens);
+			b.add("$" + i);
+			maxLen = b.size();
+			suffixTree.add(b, maxLen);
+		}
 	}
 
 	private void searchCommonSequence() {
-		List<String> c = suffixTree.commonString(50);
+		List<String> c = suffixTree.repeatedSubstring(50, 2);
 
 		List<String> tmp = new ArrayList<>();
 		StringBuilder sb = new StringBuilder();
@@ -66,12 +68,12 @@ public class ExecuteSuffixTree implements Runnable {
 					PatternIndex pi1 = pis.get(p);
 					for (int q = p + 1; q < pis.size(); q++) {
 						PatternIndex pi2 = pis.get(q);
-						if (pi1.getId() == 0 && pi2.getId() == 1) {
+						if (pi1.getId() < pi2.getId()) {
 							index1 = pi1.getIndex();
 							id1 = pi1.getId();
 							index2 = pi2.getIndex();
 							id2 = pi2.getId();
-						} else if (pi1.getId() == 1 && pi2.getId() == 0) {
+						} else if (pi1.getId() > pi2.getId()) {
 							index1 = pi2.getIndex();
 							id1 = pi2.getId();
 							index2 = pi1.getIndex();
@@ -99,20 +101,37 @@ public class ExecuteSuffixTree implements Runnable {
 								continue;
 							}
 
-							if (ci.getIndex1() + ci.getSize() != ci2.getIndex1() + ci2.getSize() || ci.getIndex2() + ci.getSize() != ci2.getIndex2() + ci2.getSize()) {
-								continue;
+							if (ci.getIndex1() >= ci2.getIndex1() && ci.getIndex2() >= ci2.getIndex2()) {
+								if (ci.getIndex1() + ci.getSize() <= ci2.getIndex1() + ci2.getSize() && ci.getIndex2() + ci.getSize() <= ci2.getIndex2() + ci2.getSize()) {
+									flag = true;
+									break;
+								}
 							}
 
-							if (ci.getIndex1() < ci2.getIndex1() && ci.getIndex2() < ci2.getIndex2()) {
-								ci2.setIndex1(ci.getIndex1());
-								ci2.setIndex2(ci.getIndex2());
-								ci2.setSize(ci.getSize());
-								ci2.setCommonHash(ci.getCommonHash());
-								flag = true;
-								break;
-							} else if (ci.getIndex1() >= ci2.getIndex1() && ci.getIndex2() >= ci2.getIndex2()) {
-								flag = true;
-								break;
+							if (ci.getIndex1() == ci2.getIndex1() && ci.getIndex2() == ci2.getIndex2()) {
+								if (ci.getIndex1() + ci.getSize() > ci2.getIndex1() + ci2.getSize() && ci.getIndex2() + ci.getSize() > ci2.getIndex2() + ci2.getSize()) {
+									ci2.setSize(ci.getSize());
+									ci2.setCommonHash(ci.getCommonHash());
+									flag = true;
+									break;
+								} else if (ci.getIndex1() + ci.getSize() <= ci2.getIndex1() + ci2.getSize() && ci.getIndex2() + ci.getSize() <= ci2.getIndex2() + ci2.getSize()) {
+									flag = true;
+									break;
+								}
+							}
+
+							if (ci.getIndex1() + ci.getSize() == ci2.getIndex1() + ci2.getSize() && ci.getIndex2() + ci.getSize() == ci2.getIndex2() + ci2.getSize()) {
+								if (ci.getIndex1() < ci2.getIndex1() && ci.getIndex2() < ci2.getIndex2()) {
+									ci2.setIndex1(ci.getIndex1());
+									ci2.setIndex2(ci.getIndex2());
+									ci2.setSize(ci.getSize());
+									ci2.setCommonHash(ci.getCommonHash());
+									flag = true;
+									break;
+								} else if (ci.getIndex1() >= ci2.getIndex1() && ci.getIndex2() >= ci2.getIndex2()) {
+									flag = true;
+									break;
+								}
 							}
 						}
 						if (!flag) {
@@ -135,47 +154,12 @@ public class ExecuteSuffixTree implements Runnable {
 			int index1;
 			int index2;
 
-			if (ci.getId1() == 0) {
-				clone1 = method1;
-			} else {
-				clone1 = method2;
-			}
-
-			if (ci.getId2() == 0) {
-				clone2 = method1;
-			} else {
-				clone2 = method2;
-			}
-
+			clone1 = list.get(ci.getId1());
+			clone2 = list.get(ci.getId2());
 			index1 = ci.getIndex1();
 			index2 = ci.getIndex2();
 
 			CodeFragmentCloneDetectorST.cfClonePairList.add(new CodeFragmentClonePairST(clone1, clone2, ci.getCommonHash(), index1, index2, ci.getSize()));
-
-/*			System.out.println("-----------------------");
-			System.out.println("[" + ci.getId1() + " " + ci.getIndex1() + "]");
-			if (ci.getId1() == 0) {
-				for (int i = ci.getIndex1(); i < ci.getIndex1() + ci.getSize(); i++) {
-					System.out.print(a.get(i));
-				}
-			} else {
-				for (int i = ci.getIndex1(); i < ci.getIndex1() + ci.getSize(); i++) {
-					System.out.print(b.get(i));
-				}
-			}
-			System.out.println();
-
-			System.out.println("[" + ci.getId2() + " " + ci.getIndex2() + "]");
-			if (ci.getId2() == 0) {
-				for (int i = ci.getIndex2(); i < ci.getIndex2() + ci.getSize(); i++) {
-					System.out.print(a.get(i));
-				}
-			} else {
-				for (int i = ci.getIndex2(); i < ci.getIndex2() + ci.getSize(); i++) {
-					System.out.print(b.get(i));
-				}
-			}
-			System.out.println();*/
 		}
 	}
 

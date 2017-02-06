@@ -70,9 +70,7 @@ class Node {
 		} else {
 			Node node = this.child;
 			while (node != null) {
-				if (node.child == null) {
-					childs.add(node);
-				}
+				childs.add(node);
 				node = node.bros;
 			}
 		}
