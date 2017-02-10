@@ -3,10 +3,16 @@ package decrescendo.suffixtree;
 class PatternIndex {
 	private int id;
 	private int index;
+	private int size;
 
-	PatternIndex(int id, int index) {
+	public PatternIndex(int id, int index, int size) {
 		this.id = id;
 		this.index = index;
+		this.size = size;
+	}
+
+	public int getSize() {
+		return size;
 	}
 
 	public int getId() {

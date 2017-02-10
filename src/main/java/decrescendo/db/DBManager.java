@@ -108,8 +108,7 @@ public class DBManager {
 				+ "PATH string, "
 				+ "METHOD_NAME string, "
 				+ "METHOD_NUMBER INTEGER, "
-				+ "TOKEN_NUMBER INTEGER, "
-				+ "START_LINE INTEGER, "
+				+ "START_LINE string, "
 				+ "ORIGINAL_TOKEN string, "
 				+ "NORMALIZED_TOKEN string)");
 		statement_memory.executeUpdate("CREATE INDEX tPathIndex ON DELETE_TOKENS(PATH)");
@@ -160,7 +159,7 @@ public class DBManager {
 	private static void createPrepareStatement() throws SQLException {
 		insertDeletedMethodInfo = connection_memory.prepareStatement("INSERT INTO DELETE_METHODS VALUES (?, ?, ?, ?, ?, ?, ?)");
 		insertDeletedSentenceInfo = connection_memory.prepareStatement("INSERT INTO DELETE_SENTENCES VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-		insertDeletedTokenInfo = connection_memory.prepareStatement("INSERT INTO DELETE_TOKENS VALUES (?, ?, ?, ?, ?, ?, ?)");
+		insertDeletedTokenInfo = connection_memory.prepareStatement("INSERT INTO DELETE_TOKENS VALUES (?, ?, ?, ?, ?, ?)");
 
 		insertFileCloneInfo_memory = connection_memory.prepareStatement("INSERT INTO FILE_CLONES VALUES (?, ?, ?, ?, ?)");
 		insertMethodCloneInfo_memory = connection_memory.prepareStatement("INSERT INTO METHOD_CLONES VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");

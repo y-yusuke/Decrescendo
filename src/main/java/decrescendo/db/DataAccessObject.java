@@ -146,7 +146,35 @@ public class DataAccessObject {
 	}
 
 	public static void insertDeletedTokenInfo(Method e) {
+		StringBuilder normalizedTokens = new StringBuilder();
+		StringBuilder originalTokens = new StringBuilder();
+		StringBuilder lineNumbers = new StringBuilder();
+
 		for (int i = 0; i < e.normalizedTokens.size(); i++) {
+			String normalizedToken = e.normalizedTokens.get(i);
+			String originalToken = e.originalTokens.get(i);
+			int lineNumber = e.lineNumberPerToken.get(i);
+
+			normalizedTokens.append(normalizedToken);
+			normalizedTokens.append("\t");
+			originalTokens.append(originalToken);
+			originalTokens.append("\t");
+			lineNumbers.append(lineNumber);
+			lineNumbers.append("\t");
+		}
+
+		try {
+			DBManager.insertDeletedTokenInfo.setString(1, e.path);
+			DBManager.insertDeletedTokenInfo.setString(2, e.name);
+			DBManager.insertDeletedTokenInfo.setInt(3, e.order);
+			DBManager.insertDeletedTokenInfo.setString(4, lineNumbers.toString());
+			DBManager.insertDeletedTokenInfo.setString(5, originalTokens.toString());
+			DBManager.insertDeletedTokenInfo.setString(6, normalizedTokens.toString());
+			DBManager.insertDeletedTokenInfo.addBatch();
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+/*		for (int i = 0; i < e.normalizedTokens.size(); i++) {
 			String normalizedToken = e.normalizedTokens.get(i);
 			String originalToken = e.originalTokens.get(i);
 			int lineNumber = e.lineNumberPerToken.get(i);
@@ -163,6 +191,6 @@ public class DataAccessObject {
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
-		}
+		}*/
 	}
 }

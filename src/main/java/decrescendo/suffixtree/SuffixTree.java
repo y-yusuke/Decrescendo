@@ -168,13 +168,13 @@ class SuffixTree {
 		this.sets++;
 	}
 
-	public List<String> repeatedSubstring(int n, int m) {
+	public List<String> repeatedSubstring(int n, int m, List<List<PatternIndex>> temp) {
 		List<String> a = new ArrayList<>();
-		searchRepeatedSubstring(this.root, n, m, a);
+		searchRepeatedSubstring(this.root, n, m, temp);
 		return a;
 	}
 
-	private int searchRepeatedSubstring(Node node, int n, int m, List<String> a) {
+	private int searchRepeatedSubstring(Node node, int n, int m, List<List<PatternIndex>> temp) {
 		int c;
 		int l;
 
@@ -186,7 +186,7 @@ class SuffixTree {
 			c = 0;
 
 			while (x != null) {
-				c += this.searchRepeatedSubstring(x, n, m, a);
+				c += this.searchRepeatedSubstring(x, n, m, temp);
 				x = x.bros;
 			}
 
@@ -196,10 +196,20 @@ class SuffixTree {
 		if (l > 0 && c >= m) {
 			//for (int k = l; l >= 0; k--) {
 			if (node.depth + l >= n) {
-				for (int i = node.start - node.depth; i < node.start + l; i++) {
+/*				for (int i = node.start - node.depth; i < node.start + l; i++) {
 					a.add(this.buff.get(i));
 				}
-				a.add("\n");
+				a.add("\n");*/
+				List<PatternIndex> pis = new ArrayList<>();
+				int size = l + node.depth;
+				for (Node x : node.traverseLeaf()) {
+					if (x.child == null) {
+						pis.add(new PatternIndex(x.id, (x.start - x.depth - this.interval.get(x.id)), size));
+					} else {
+						getIDs(x, size, pis);
+					}
+				}
+				temp.add(pis);
 			}
 			//}
 		}
@@ -253,7 +263,7 @@ class SuffixTree {
 		}
 	}
 
-	public List<PatternIndex> searchPatternAll(List<String> seq) {
+/*	public List<PatternIndex> searchPatternAll(List<String> seq) {
 		Node node = this.searchPatternSub(seq);
 		if (node == null) {
 			return null;
@@ -270,14 +280,14 @@ class SuffixTree {
 		}
 
 		return pis;
-	}
+	}*/
 
-	private void getIDs(Node node, List<PatternIndex> pis) {
+	private void getIDs(Node node, int size, List<PatternIndex> pis) {
 		for (Node x : node.traverseLeaf()) {
 			if (x.child == null) {
-				pis.add(new PatternIndex(x.id, (x.start - x.depth - this.interval.get(x.id))));
+				pis.add(new PatternIndex(x.id, (x.start - x.depth - this.interval.get(x.id)), size));
 			} else {
-				getIDs(x, pis);
+				getIDs(x, size, pis);
 			}
 		}
 	}

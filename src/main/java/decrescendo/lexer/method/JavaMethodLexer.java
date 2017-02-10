@@ -57,7 +57,18 @@ public class JavaMethodLexer implements MethodLexer {
 
 				int startLine = unit.getLineNumber(node.getName().getStartPosition());
 				int endLine = unit.getLineNumber(node.getStartPosition() + node.getLength());
+				if (endLine == -1) {
+					try {
+						throw new InvalidInputException();
+					} catch (InvalidInputException e) {
+						System.err.println("Cannot parse this method: " + path + "\t" + node.getName().toString());
+						e.printStackTrace();
+						System.err.println();
+						return false;
+					}
+				}
 				String methodCode = getJavaMethodCode(code, startLine, endLine);
+
 
 				try {
 					Scanner scanner = new Scanner();

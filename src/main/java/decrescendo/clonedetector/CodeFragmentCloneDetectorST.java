@@ -14,11 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.synchronizedList;
-
 public class CodeFragmentCloneDetectorST {
 	private static int clonePairId;
-	public static List<CodeFragmentClonePairST> cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePairST>());
+	public List<CodeFragmentClonePairST> cfClonePairList = new ArrayList<>();
 
 	public CodeFragmentCloneDetectorST() {
 		clonePairId = 0;
@@ -33,7 +31,7 @@ public class CodeFragmentCloneDetectorST {
 		System.out.println("Detecting Code Fragment Clone...");
 		start = System.currentTimeMillis();
 
-		new ExecuteSuffixTree(list).run();
+		cfClonePairList = new ExecuteSuffixTree(list).run();
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
@@ -226,9 +224,34 @@ public class CodeFragmentCloneDetectorST {
 		DBManager.selectDeletedTokens.setInt(2, order);
 		try (ResultSet results2 = DBManager.selectDeletedTokens.executeQuery()) {
 			while (results2.next()) {
-				originalTokens.add(results2.getString(6));
-				normalizedTokens.add(results2.getString(7));
-				lineNumberPerToken.add(results2.getInt(5));
+				String originalString = results2.getString(5);
+				String normalizeString = results2.getString(6);
+				String lineNumberString = results2.getString(4);
+
+				String[] original = originalString.split("\t");
+				String[] normalize = normalizeString.split("\t");
+				String[] lineNumber = lineNumberString.split("\t");
+
+				int skip = 0;
+
+				for (int i = 0; i < normalize.length; i++) {
+					if (original[i + skip].startsWith("\"") && !original[i + skip].endsWith("\"")) {
+						StringBuilder tmp = new StringBuilder();
+						tmp.append(original[i + skip]);
+						for (int j = i + skip + 1; j < original.length; j++) {
+							tmp.append(original[j]);
+							skip++;
+							if (original[j].endsWith("\"")) {
+								originalTokens.add(tmp.toString());
+								break;
+							}
+						}
+					} else {
+						originalTokens.add(original[i + skip]);
+					}
+					normalizedTokens.add(normalize[i]);
+					lineNumberPerToken.add(Integer.parseInt(lineNumber[i]));
+				}
 			}
 		}
 
