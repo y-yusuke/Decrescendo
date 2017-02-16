@@ -4,7 +4,6 @@ import decrescendo.config.Config;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
 import decrescendo.hash.Hash;
-import decrescendo.hash.HashCreator;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
@@ -238,8 +237,8 @@ public class JavaMethodLexer implements MethodLexer {
 
 					if (normalizedTokens.size() - separateTokenCount >= Config.mMinTokens) {
 						String name = node.getName().toString();
-						Hash normalizedHash = new Hash(HashCreator.getHash(normalizedSb.toString()));
-						Hash originalHash = new Hash(HashCreator.getHash(originalSb.toString()));
+						Hash normalizedHash = new Hash(Hash.createHash(normalizedSb.toString()));
+						Hash originalHash = new Hash(Hash.createHash(originalSb.toString()));
 						Method method = new Method(path, name, methodOrder, startLine, endLine, normalizedHash, originalHash, normalizedTokens, originalTokens, lineNumberPerToken);
 
 						method.representative = representative;

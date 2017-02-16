@@ -3,7 +3,6 @@ package decrescendo.lexer.file;
 import decrescendo.config.Config;
 import decrescendo.granularity.File;
 import decrescendo.hash.Hash;
-import decrescendo.hash.HashCreator;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.parser.Scanner;
@@ -116,7 +115,7 @@ public class JavaFileLexer implements FileLexer {
 			}
 
 			if (tokenSize >= Config.fMinTokens) {
-				return new File(path.toString(), new Hash(HashCreator.getHash(normalizedSb.toString())), new Hash(HashCreator.getHash(originalSb.toString())), code);
+				return new File(path.toString(), new Hash(Hash.createHash(normalizedSb.toString())), new Hash(Hash.createHash(originalSb.toString())), code);
 			} else {
 				return null;
 			}

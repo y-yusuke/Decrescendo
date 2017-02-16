@@ -3,7 +3,6 @@ package decrescendo.lexer.sentence;
 import decrescendo.granularity.CodeFragment;
 import decrescendo.granularity.Method;
 import decrescendo.hash.Hash;
-import decrescendo.hash.HashCreator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -47,8 +46,8 @@ public class SentenceLexer {
 				case "{":
 				case "}":
 					if (!nTmp.toString().equals("")) {
-						normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
-						originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
+						normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
+						originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
 						lineNumberPerSentence.add(lineNumbers);
 					}
 					nTmp = new StringBuilder();
@@ -84,8 +83,8 @@ public class SentenceLexer {
 								lineNumbers.add(lineNumber2);
 
 								if (count == 1) {
-									normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
-									originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
+									normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
+									originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
 									lineNumberPerSentence.add(lineNumbers);
 
 									nTmp = new StringBuilder();
@@ -121,8 +120,8 @@ public class SentenceLexer {
 								oTmp.append(oToken2);
 								lineNumbers.add(lineNumber2);
 
-								normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
-								originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
+								normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
+								originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
 								lineNumberPerSentence.add(lineNumbers);
 
 								nTmp = new StringBuilder();
@@ -144,8 +143,8 @@ public class SentenceLexer {
 					oTmp.append(oToken);
 					lineNumbers.add(lineNumber);
 
-					normalizedSentences.add(new Hash(HashCreator.getHash(nTmp.toString())));
-					originalSentences.add(new Hash(HashCreator.getHash(oTmp.toString())));
+					normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
+					originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
 					lineNumberPerSentence.add(lineNumbers);
 
 					nTmp = new StringBuilder();

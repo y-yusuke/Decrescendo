@@ -3,7 +3,6 @@ package decrescendo.suffixtree;
 import decrescendo.codefragmentclonest.CodeFragmentClonePairST;
 import decrescendo.granularity.Method;
 import decrescendo.hash.Hash;
-import decrescendo.hash.HashCreator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -327,7 +326,7 @@ public class ExecuteSuffixTree {
 						sb2.append(tokens.get(p));
 					}
 
-					cfClonePairList.add(new CodeFragmentClonePairST(clone1, clone2, new Hash(HashCreator.getHash(sb2.toString())), index1, index2, ci.getSize()));
+					cfClonePairList.add(new CodeFragmentClonePairST(clone1, clone2, new Hash(Hash.createHash(sb2.toString())), index1, index2, ci.getSize()));
 				}
 			}
 		}
