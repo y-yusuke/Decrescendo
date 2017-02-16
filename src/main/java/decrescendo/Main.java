@@ -1,4 +1,4 @@
-package decrescendo.main;
+package decrescendo;
 
 import decrescendo.clonedetector.CodeFragmentCloneDetectorST;
 import decrescendo.clonedetector.CodeFragmentCloneDetectorSW;

@@ -5,7 +5,7 @@ repositories {
     jcenter()
 }
 
-mainClassName = "decrescendo.main.Main"
+mainClassName = "decrescendo.Main"
 
 dependencies {
     compile 'org.slf4j:slf4j-api:1.7.21'
