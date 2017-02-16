@@ -3,11 +3,14 @@ package decrescendo.suffixtree;
 import decrescendo.codefragmentclonest.CodeFragmentClonePairST;
 import decrescendo.granularity.Method;
 import decrescendo.hash.Hash;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ExecuteSuffixTree {
+	private final static Logger log = LoggerFactory.getLogger(ExecuteSuffixTree.class);
 	private SuffixTree suffixTree;
 	private int maxLen;
 	private List<String> a;
@@ -22,7 +25,7 @@ public class ExecuteSuffixTree {
 		double time;
 
 
-		System.out.println("Allocating Objects on the Heap ...");
+		log.info("Allocating Objects on the Heap ...");
 		start = System.currentTimeMillis();
 		memo = new ArrayList[arraySize][arraySize];
 /*
@@ -34,20 +37,20 @@ public class ExecuteSuffixTree {
 */
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time  :")).append(time).append(" s\n").toString());
+		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
 	}
 
 	public List<CodeFragmentClonePairST> run() {
 		long start, stop;
 		double time;
-		System.out.println("Making Suffix Tree ...");
+		log.info("Making Suffix Tree ...");
 		start = System.currentTimeMillis();
 
 		makeSuffixTree();
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time  :")).append(time).append(" s\n").toString());
+		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
 
 		return searchCommonSequence();
 		//printNode(suffixTree.root, a);
@@ -65,14 +68,14 @@ public class ExecuteSuffixTree {
 			b.add("$" + i);
 			maxLen = b.size();
 			suffixTree.add(b, maxLen);
-			//System.out.println("finish " + i);
+			//log.info("finish " + i);
 		}
 	}
 
 	private List<CodeFragmentClonePairST> searchCommonSequence() {
 		long start, stop;
 		double time;
-		System.out.println("Searching Repeated Substring ...");
+		log.info("Searching Repeated Substring ...");
 		start = System.currentTimeMillis();
 
 		List<List<PatternIndex>> temp = new ArrayList<>();
@@ -82,9 +85,9 @@ public class ExecuteSuffixTree {
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time  :")).append(time).append(" s\n").toString());
+		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
 
-/*		System.out.println("Searching Pattern Index ...");
+/*		log.info("Searching Pattern Index ...");
 		start = System.currentTimeMillis();*/
 
 /*		List<String> tmp = new ArrayList<>();
@@ -204,10 +207,10 @@ public class ExecuteSuffixTree {
 
 /*		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time  :")).append(time).append(" s\n").toString());*/
+		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s\n").toString());*/
 
 
-		System.out.println("Generating Clone Pair List ...");
+		log.info("Generating Clone Pair List ...");
 		start = System.currentTimeMillis();
 
 		for (List<PatternIndex> pis : temp) {
@@ -333,7 +336,7 @@ public class ExecuteSuffixTree {
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time  :")).append(time).append(" s\n").toString());
+		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
 
 		return cfClonePairList;
 	}

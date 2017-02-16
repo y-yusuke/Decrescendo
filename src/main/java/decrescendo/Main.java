@@ -8,32 +8,28 @@ import decrescendo.config.Config;
 import decrescendo.db.DBManager;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.util.HashSet;
 
 public class Main {
-
+	private final static Logger log = LoggerFactory.getLogger(Main.class);
 	public static void main(String[] args) throws Exception {
 		try {
 			long start = System.currentTimeMillis();
 			Config.setConfig();
 			DBManager.dbSetup();
 
-			PrintStream ps = new PrintStream(new FileOutputStream(new java.io.File(Config.logPath)));
-			System.setOut(ps);
-			System.setErr(ps);
-
 			HashSet<File> files = new FileCloneDetector().execute(Config.targetPath);
-			System.out.println(getMemoryInfo());
+			log.info(getMemoryInfo());
 
 			HashSet<Method> methods = new HashSet<>();
 			if (Config.method || Config.codeFragment) {
 				methods = new MethodCloneDetector().execute(files);
 				files.clear();
-				System.out.println(getMemoryInfo());
+				log.info(getMemoryInfo());
 			}
 
 			if (Config.codeFragment) {
@@ -42,13 +38,13 @@ public class Main {
 				} else if (Config.suffix) {
 					new CodeFragmentCloneDetectorST().execute(methods);
 				}
-				System.out.println(getMemoryInfo());
+				log.info(getMemoryInfo());
 			}
 
 			DBManager.closeDB();
 			long stop = System.currentTimeMillis();
 			double time = (double) (stop - start) / 1000D;
-			System.out.println((new StringBuilder("Execution Time :")).append(time).append(" s").toString());
+			log.info("Execution Time :{} s", time);
 		} catch (Exception e) {
 			DBManager.closeDB();
 			e.printStackTrace();
@@ -63,8 +59,8 @@ public class Main {
 		long max = Runtime.getRuntime().maxMemory() / 1024 / 1024;
 		long used = total - free;
 		double ratio = (used * 100 / (double) total);
-		return "Java Memory Info :\nSum =" + f1.format(total) + "\n"
-				+ "Usage=" + f1.format(used) + " (" + f2.format(ratio) + "%)\n"
-				+ "Max Usage=" + f1.format(max) + "\n";
+		return "Java Memory Info : Sum =" + f1.format(total) + " "
+				+ "Usage=" + f1.format(used) + " (" + f2.format(ratio) + "%) "
+				+ "Max Usage=" + f1.format(max);
 	}
 }

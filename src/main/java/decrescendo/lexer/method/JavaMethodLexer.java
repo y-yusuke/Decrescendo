@@ -4,12 +4,15 @@ import decrescendo.config.Config;
 import decrescendo.granularity.File;
 import decrescendo.granularity.Method;
 import decrescendo.hash.Hash;
+import decrescendo.lexer.file.JavaFileLexer;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.parser.Scanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class JavaMethodLexer implements MethodLexer {
+	private final static Logger log = LoggerFactory.getLogger(JavaMethodLexer.class);
 	public JavaMethodLexer() {
 	}
 
@@ -60,9 +64,8 @@ public class JavaMethodLexer implements MethodLexer {
 					try {
 						throw new InvalidInputException();
 					} catch (InvalidInputException e) {
-						System.err.println("Cannot parse this method: " + path + "\t" + node.getName().toString());
-						e.printStackTrace();
-						System.err.println();
+						log.error("Cannot parse this method: {}\t{}", path, node.getName());
+						log.error("{}", e);
 						return false;
 					}
 				}
@@ -249,9 +252,8 @@ public class JavaMethodLexer implements MethodLexer {
 					return super.visit(node);
 
 				} catch (InvalidInputException e) {
-					System.err.println("Cannot parse this method: " + path + "\t" + node.getName().toString());
-					e.printStackTrace();
-					System.err.println();
+					log.error("Cannot parse this method: {}\t{}", path, node.getName());
+					log.error("{}", e);
 					return false;
 				}
 			}

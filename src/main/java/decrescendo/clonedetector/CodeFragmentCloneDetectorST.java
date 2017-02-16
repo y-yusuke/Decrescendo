@@ -6,6 +6,8 @@ import decrescendo.db.DBManager;
 import decrescendo.db.DataAccessObject;
 import decrescendo.granularity.Method;
 import decrescendo.suffixtree.ExecuteSuffixTree;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CodeFragmentCloneDetectorST {
+	private final static Logger log = LoggerFactory.getLogger(CodeFragmentCloneDetectorST.class);
 	private static int clonePairId;
 	public List<CodeFragmentClonePairST> cfClonePairList = new ArrayList<>();
 
@@ -28,17 +31,17 @@ public class CodeFragmentCloneDetectorST {
 
 		List<Method> list = new ArrayList<>(set);
 
-		System.out.println("Detecting Code Fragment Clone...");
+		log.info("Detecting Code Fragment Clone...");
 		start = System.currentTimeMillis();
 
 		cfClonePairList = new ExecuteSuffixTree(list).run();
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
+		log.info("Execution Time (Match) :{} s", time);
 
 
-		System.out.println("Outputting Code Fragment Clone Result...");
+		log.info("Outputting Code Fragment Clone Result...");
 		start = System.currentTimeMillis();
 
 		List<List<CodeFragmentClonePairST>> cfCloneSets = getCodeFragmentCloneSets(cfClonePairList);
@@ -46,9 +49,9 @@ public class CodeFragmentCloneDetectorST {
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
+		log.info("Execution Time (Output) :{} s", time);
 
-		System.out.println("Detected " + clonePairId + " Code Fragment Clone Pair\n");
+		log.info("Detected {} Code Fragment Clone Pair", clonePairId);
 	}
 
 	private List<List<CodeFragmentClonePairST>> getCodeFragmentCloneSets(List<CodeFragmentClonePairST> cfClonePairList) {
