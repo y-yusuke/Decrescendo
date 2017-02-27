@@ -3,10 +3,11 @@ package decrescendo.lexer.file;
 import decrescendo.config.Config;
 import decrescendo.granularity.File;
 import decrescendo.hash.Hash;
-import decrescendo.hash.HashCreator;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.parser.Scanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.*;
 
 public class JavaFileLexer implements FileLexer {
+	private final static Logger log = LoggerFactory.getLogger(JavaFileLexer.class);
 
 	public JavaFileLexer() {
 	}
@@ -42,8 +44,7 @@ public class JavaFileLexer implements FileLexer {
 		try {
 			String code = getJavaFileCode(path);
 			if (code == null) {
-				System.err.println("Cannot read this file: " + path.toString());
-				System.err.println();
+				log.error("Cannot read this file: {}", path);
 				return null;
 			}
 
@@ -116,15 +117,14 @@ public class JavaFileLexer implements FileLexer {
 			}
 
 			if (tokenSize >= Config.fMinTokens) {
-				return new File(path.toString(), new Hash(HashCreator.getHash(normalizedSb.toString())), new Hash(HashCreator.getHash(originalSb.toString())), code);
+				return new File(path.toString(), new Hash(Hash.createHash(normalizedSb.toString())), new Hash(Hash.createHash(originalSb.toString())), code);
 			} else {
 				return null;
 			}
 
 		} catch (InvalidInputException e) {
-			System.err.println("Cannot parse this file: " + path);
-			e.printStackTrace();
-			System.err.println();
+			log.error("Cannot parse this file: {}", path);
+			log.error("{aa}", e);
 			return null;
 		}
 	}

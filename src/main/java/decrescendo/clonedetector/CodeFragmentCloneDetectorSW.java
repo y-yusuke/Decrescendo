@@ -10,6 +10,8 @@ import decrescendo.granularity.Method;
 import decrescendo.hash.Hash;
 import decrescendo.lexer.sentence.SentenceLexer;
 import decrescendo.smithwaterman.SmithWaterman;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 import static java.util.Collections.synchronizedList;
 
 public class CodeFragmentCloneDetectorSW {
+	private final static Logger log = LoggerFactory.getLogger(CodeFragmentCloneDetectorSW.class);
 	private static int clonePairId;
 	public static List<CodeFragmentClonePairSW> cfClonePairList = synchronizedList(new ArrayList<CodeFragmentClonePairSW>());
 
@@ -35,7 +38,7 @@ public class CodeFragmentCloneDetectorSW {
 		long start, stop;
 		double time;
 
-		System.out.println("Identifying Sentence...");
+		log.info("Identifying Sentence...");
 		start = System.currentTimeMillis();
 
 		List<CodeFragment> list = SentenceLexer.getCodeFragmentList(set);
@@ -43,10 +46,10 @@ public class CodeFragmentCloneDetectorSW {
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
+		log.info("Execution Time (Parse) :{} s", time);
 
 
-		System.out.println("Detecting Code Fragment Clone...");
+		log.info("Detecting Code Fragment Clone...");
 		start = System.currentTimeMillis();
 
 		int threadsNum = Runtime.getRuntime().availableProcessors();
@@ -64,17 +67,17 @@ public class CodeFragmentCloneDetectorSW {
 				try {
 					service.awaitTermination(100L, TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
-					System.out.println("Interrupted...");
+					log.info("Interrupted...");
 				}
 			}
 		}
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
+		log.info("Execution Time (Match) :{} s", time);
 
 
-		System.out.println("Outputting Code Fragment Clone Result...");
+		log.info("Outputting Code Fragment Clone Result...");
 		start = System.currentTimeMillis();
 
 		List<List<CodeFragmentClonePairSW>> cfCloneSets = getCodeFragmentCloneSets(cfClonePairList);
@@ -82,9 +85,9 @@ public class CodeFragmentCloneDetectorSW {
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
+		log.info("Execution Time (Output) :{} s", time);
 
-		System.out.println("Detected " + clonePairId + " Code Fragment Clone Pair\n");
+		log.info("Detected {} Code Fragment Clone Pair", clonePairId);
 	}
 
 	private List<List<CodeFragmentClonePairSW>> getCodeFragmentCloneSets(List<CodeFragmentClonePairSW> cfClonePairList) {
