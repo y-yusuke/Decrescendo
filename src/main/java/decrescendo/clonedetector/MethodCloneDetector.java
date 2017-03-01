@@ -10,6 +10,8 @@ import decrescendo.hash.Hash;
 import decrescendo.lexer.method.JavaMethodLexer;
 import decrescendo.lexer.method.MethodLexer;
 import decrescendo.lexer.sentence.SentenceLexer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MethodCloneDetector {
+	private final static Logger log = LoggerFactory.getLogger(MethodCloneDetector.class);
 	private int clonePairId;
 
 	public MethodCloneDetector() {
@@ -40,37 +43,37 @@ public class MethodCloneDetector {
 				throw new AssertionError();
 		}
 
-		System.out.println("Parsing Method...");
+		log.info("Parsing Method...");
 		start = System.currentTimeMillis();
 
 		HashSet<Method> methodSet = methodLexer.getMethodSet(files);
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
+		log.info("Execution Time (Parse) :{} s", time);
 
 
 		if (Config.method) {
-			System.out.println("Detecting Method Code Clone...");
+			log.info("Detecting Method Code Clone...");
 			start = System.currentTimeMillis();
 
 			List<List<Method>> methodCloneSets = getMethodCloneSets(methodSet);
 
 			stop = System.currentTimeMillis();
 			time = (double) (stop - start) / 1000D;
-			System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
+			log.info("Execution Time (Match) :{} s", time);
 
 
-			System.out.println("Outputting Method Code Clone Result...");
+			log.info("Outputting Method Code Clone Result...");
 			start = System.currentTimeMillis();
 
 			outputMethodCloneResult(methodCloneSets, methodSet);
 
 			stop = System.currentTimeMillis();
 			time = (double) (stop - start) / 1000D;
-			System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
+			log.info("Execution Time (Output) :{} s", time);
 
-			System.out.println("Detected " + clonePairId + " Method Code Clone Pair\n");
+			log.info("Detected {} Method Code Clone Pair", clonePairId);
 		}
 
 		return methodSet;

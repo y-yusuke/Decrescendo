@@ -11,6 +11,8 @@ import decrescendo.lexer.file.JavaFileLexer;
 import decrescendo.lexer.method.JavaMethodLexer;
 import decrescendo.lexer.method.MethodLexer;
 import decrescendo.lexer.sentence.SentenceLexer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.HashSet;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FileCloneDetector {
+	private final static Logger log = LoggerFactory.getLogger(FileCloneDetector.class);
 	private int clonePairId;
 
 	public FileCloneDetector() {
@@ -38,37 +41,37 @@ public class FileCloneDetector {
 				throw new AssertionError();
 		}
 
-		System.out.println("Parsing File...");
+		log.info("Parsing File...");
 		start = System.currentTimeMillis();
 
 		HashSet<File> fileSet = fileLexer.getFileSet(path);
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		System.out.println((new StringBuilder("Execution Time (Parse) :")).append(time).append(" s\n").toString());
+		log.info("Execution Time (Parse) :{} s", time);
 
 
 		if (Config.file) {
-			System.out.println("Detecting File Code Clone...");
+			log.info("Detecting File Code Clone...");
 			start = System.currentTimeMillis();
 
 			List<List<File>> fileCloneSets = getFileCloneSets(fileSet);
 
 			stop = System.currentTimeMillis();
 			time = (double) (stop - start) / 1000D;
-			System.out.println((new StringBuilder("Execution Time (Match) :")).append(time).append(" s\n").toString());
+			log.info("Execution Time (Match) :{} s", time);
 
 
-			System.out.println("Outputting File Code Clone Result...");
+			log.info("Outputting File Code Clone Result...");
 			start = System.currentTimeMillis();
 
 			outputFileCloneResult(fileCloneSets, fileSet);
 
 			stop = System.currentTimeMillis();
 			time = (double) (stop - start) / 1000D;
-			System.out.println((new StringBuilder("Execution Time (Output) :")).append(time).append(" s\n").toString());
+			log.info("Execution Time (Output) :{} s", time);
 
-			System.out.println("Detected " + clonePairId + " File Code Clone Pair\n");
+			log.info("Detected {} File Code Clone Pair", clonePairId);
 		}
 
 		return fileSet;
