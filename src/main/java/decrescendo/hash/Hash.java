@@ -9,20 +9,22 @@ public class Hash {
 	public final int hashCode;
 
 	public Hash(byte[] hash) {
+		if (hash == null || hash.length != 16) {
+			throw new IllegalArgumentException();
+		}
 		this.hash = hash;
 		this.hashCode = Arrays.hashCode(hash);
 	}
 
-    public static byte[] createHash(String source) {
-        try {
-            MessageDigest hash = MessageDigest.getInstance("MD5");
-            hash.update(source.getBytes());
-            return hash.digest();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+    public static Hash createHash(String source) {
+		try {
+			MessageDigest hash = MessageDigest.getInstance("MD5");
+			hash.update(source.getBytes());
+			return new Hash(hash.digest());
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
     @Override
 	public boolean equals(Object o) {
@@ -36,7 +38,6 @@ public class Hash {
 	public int hashCode() {
 		return this.hashCode;
 	}
-
 
 	public int compareTo(Hash hash2) {
 		for (int i = 0; i < this.hash.length; i++) {

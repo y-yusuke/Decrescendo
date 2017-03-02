@@ -329,7 +329,7 @@ public class ExecuteSuffixTree {
 						sb2.append(tokens.get(p));
 					}
 
-					cfClonePairList.add(new CodeFragmentClonePairST(clone1, clone2, new Hash(Hash.createHash(sb2.toString())), index1, index2, ci.getSize()));
+					cfClonePairList.add(new CodeFragmentClonePairST(clone1, clone2, Hash.createHash(sb2.toString()), index1, index2, ci.getSize()));
 				}
 			}
 		}

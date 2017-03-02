@@ -240,8 +240,8 @@ public class JavaMethodLexer implements MethodLexer {
 
 					if (normalizedTokens.size() - separateTokenCount >= Config.mMinTokens) {
 						String name = node.getName().toString();
-						Hash normalizedHash = new Hash(Hash.createHash(normalizedSb.toString()));
-						Hash originalHash = new Hash(Hash.createHash(originalSb.toString()));
+						Hash normalizedHash = Hash.createHash(normalizedSb.toString());
+						Hash originalHash = Hash.createHash(originalSb.toString());
 						Method method = new Method(path, name, methodOrder, startLine, endLine, normalizedHash, originalHash, normalizedTokens, originalTokens, lineNumberPerToken);
 
 						method.representative = representative;

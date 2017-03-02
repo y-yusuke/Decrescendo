@@ -117,7 +117,7 @@ public class JavaFileLexer implements FileLexer {
 			}
 
 			if (tokenSize >= Config.fMinTokens) {
-				return new File(path.toString(), new Hash(Hash.createHash(normalizedSb.toString())), new Hash(Hash.createHash(originalSb.toString())), code);
+				return new File(path.toString(), Hash.createHash(normalizedSb.toString()), Hash.createHash(originalSb.toString()), code);
 			} else {
 				return null;
 			}
