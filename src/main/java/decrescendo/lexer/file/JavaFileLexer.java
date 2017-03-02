@@ -123,8 +123,7 @@ public class JavaFileLexer implements FileLexer {
 			}
 
 		} catch (InvalidInputException e) {
-			log.error("Cannot parse this file: {}", path);
-			log.error("{aa}", e);
+			log.error("Cannot parse this file: {}", path, e);
 			return null;
 		}
 	}
