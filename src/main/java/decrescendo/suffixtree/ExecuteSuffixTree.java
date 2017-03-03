@@ -37,7 +37,7 @@ public class ExecuteSuffixTree {
 */
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
+		log.info("Execution Time  :{} s", time);
 	}
 
 	public List<CodeFragmentClonePairST> run() {
@@ -50,7 +50,7 @@ public class ExecuteSuffixTree {
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
+		log.info("Execution Time  :{} s", time);
 
 		return searchCommonSequence();
 		//printNode(suffixTree.root, a);
@@ -85,7 +85,7 @@ public class ExecuteSuffixTree {
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
+		log.info("Execution Time  :{} s", time);
 
 /*		log.info("Searching Pattern Index ...");
 		start = System.currentTimeMillis();*/
@@ -329,14 +329,14 @@ public class ExecuteSuffixTree {
 						sb2.append(tokens.get(p));
 					}
 
-					cfClonePairList.add(new CodeFragmentClonePairST(clone1, clone2, new Hash(Hash.createHash(sb2.toString())), index1, index2, ci.getSize()));
+					cfClonePairList.add(new CodeFragmentClonePairST(clone1, clone2, Hash.createHash(sb2.toString()), index1, index2, ci.getSize()));
 				}
 			}
 		}
 
 		stop = System.currentTimeMillis();
 		time = (double) (stop - start) / 1000D;
-		log.info((new StringBuilder("Execution Time  :")).append(time).append(" s").toString());
+		log.info("Execution Time  :{} s", time);
 
 		return cfClonePairList;
 	}

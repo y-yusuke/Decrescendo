@@ -117,14 +117,13 @@ public class JavaFileLexer implements FileLexer {
 			}
 
 			if (tokenSize >= Config.fMinTokens) {
-				return new File(path.toString(), new Hash(Hash.createHash(normalizedSb.toString())), new Hash(Hash.createHash(originalSb.toString())), code);
+				return new File(path.toString(), Hash.createHash(normalizedSb.toString()), Hash.createHash(originalSb.toString()), code);
 			} else {
 				return null;
 			}
 
 		} catch (InvalidInputException e) {
-			log.error("Cannot parse this file: {}", path);
-			log.error("{aa}", e);
+			log.error("Cannot parse this file: {}", path, e);
 			return null;
 		}
 	}

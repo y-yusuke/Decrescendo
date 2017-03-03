@@ -46,8 +46,8 @@ public class SentenceLexer {
 				case "{":
 				case "}":
 					if (!nTmp.toString().equals("")) {
-						normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
-						originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
+						normalizedSentences.add(Hash.createHash(nTmp.toString()));
+						originalSentences.add(Hash.createHash(oTmp.toString()));
 						lineNumberPerSentence.add(lineNumbers);
 					}
 					nTmp = new StringBuilder();
@@ -83,8 +83,8 @@ public class SentenceLexer {
 								lineNumbers.add(lineNumber2);
 
 								if (count == 1) {
-									normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
-									originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
+									normalizedSentences.add(Hash.createHash(nTmp.toString()));
+									originalSentences.add(Hash.createHash(oTmp.toString()));
 									lineNumberPerSentence.add(lineNumbers);
 
 									nTmp = new StringBuilder();
@@ -120,8 +120,8 @@ public class SentenceLexer {
 								oTmp.append(oToken2);
 								lineNumbers.add(lineNumber2);
 
-								normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
-								originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
+								normalizedSentences.add(Hash.createHash(nTmp.toString()));
+								originalSentences.add(Hash.createHash(oTmp.toString()));
 								lineNumberPerSentence.add(lineNumbers);
 
 								nTmp = new StringBuilder();
@@ -143,8 +143,8 @@ public class SentenceLexer {
 					oTmp.append(oToken);
 					lineNumbers.add(lineNumber);
 
-					normalizedSentences.add(new Hash(Hash.createHash(nTmp.toString())));
-					originalSentences.add(new Hash(Hash.createHash(oTmp.toString())));
+					normalizedSentences.add(Hash.createHash(nTmp.toString()));
+					originalSentences.add(Hash.createHash(oTmp.toString()));
 					lineNumberPerSentence.add(lineNumbers);
 
 					nTmp = new StringBuilder();
